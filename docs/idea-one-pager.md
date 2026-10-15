@@ -1,5 +1,5 @@
 # SkillBridge API
-Track: Backend Development   Stack: Java 21, Spring Boot 3.5, Spring Data JPA, PostgreSQL, Flyway, Spring Security + JWT, Docker
+Track: Backend Development   Stack: Java 21, Spring Boot 4.0.8, Spring Data JPA, PostgreSQL, Flyway, Spring Security + JWT, Docker
 
 Target user: An employee in a mid-sized organisation seeking internal mobility or a stretch role.
 Internal hiring managers and talent leads take part as the people who verify that employee's skills.

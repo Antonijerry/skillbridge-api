@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: skillbridge-api
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5433}/${DB_NAME:skillbridge}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+
+server:
+  error:
+    include-stacktrace: never
+    include-message: never
+    include-binding-errors: never

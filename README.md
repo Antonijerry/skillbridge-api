@@ -24,25 +24,22 @@ flowchart LR
 | Area | State |
 |---|---|
 | Design: one-pager, work plan, ERD, API spec, business rules | Done, see [documentation](#documentation) |
-| Application skeleton, PostgreSQL in Docker, Flyway schema | Done |
+| Application skeleton, PostgreSQL in Docker, Flyway schema | Done, verified from a clean clone |
 | Skill assessment CRUD endpoints | Being implemented |
 | Authentication, verification, opportunities, applications | Planned for Week 2 |
 | Tests, OpenAPI docs, deployment | Planned for Week 3 |
 
 ## Quick start
 
-**Requirement:** [Docker Desktop](https://www.docker.com/products/docker-desktop/), running. Nothing else: no JDK, Maven or PostgreSQL. The first build needs internet to download images and dependencies.
-
-<!-- OPTION 1: keep only if `docker compose up --build` has been tested -->
+**Requirement:** [Docker Desktop](https://www.docker.com/products/docker-desktop/), running. Nothing else: no JDK, Maven or PostgreSQL. The first build needs internet and takes several minutes (it downloads images and dependencies), so don't stop it if it looks quiet. Later starts take seconds.
 ### Option 1: Docker only (recommended)
 ```bash
-git clone https://github.com/YOUR-USERNAME/skillbridge-api.git
+git clone https://github.com/Antonijerry/skillbridge-api.git
 cd skillbridge-api
 cp .env.example .env        # Windows: copy .env.example .env
 docker compose up --build
 ```
 When the log shows `Started SkillbridgeApiApplication`, the application is listening on **http://localhost:8080** and its database schema is created. The `.env` values are local dummy values and work as they are.
-<!-- END OPTION 1 -->
 
 ### Option 2: Run from source (developers)
 Requires JDK 21 and Docker.
@@ -96,4 +93,4 @@ More in [`docs/design-decisions.md`](docs/design-decisions.md) and [`docs/busine
 | `Cannot resolve placeholder 'DB_USER'` (Option 2) | Create `.env` from `.env.example` in the repo root |
 
 ## Documentation
-[One-pager](docs/idea-one-pager.md) · [Work plan](docs/work-plan.md) · [ERD](docs/erd.md) · [API spec](docs/api-spec.md) · [Business rules](docs/business-rules.md) · [Design decisions](docs/design-decisions.md) · [PDF copies](https://drive.google.com/drive/folders/YOUR-FOLDER-ID)
+[One-pager](docs/idea-one-pager.md) · [Work plan](docs/work-plan.md) · [ERD](docs/erd.md) · [API spec](docs/api-spec.md) · [Business rules](docs/business-rules.md) · [Design decisions](docs/design-decisions.md)

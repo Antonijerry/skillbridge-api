@@ -1,0 +1,7 @@
+{
+  "employeeId": "11111111-1111-1111-1111-111111111111",
+  "skillId": "aaaaaaaa-0000-0000-0000-000000000005",
+  "claimedLevel": "BEGINNER",
+  "evidenceSummary": "too short",
+  "evidenceUrl": "ftp://not-http"
+}

@@ -1,0 +1,7 @@
+{
+  "employeeId": "11111111-1111-1111-1111-111111111111",
+  "skillId": "aaaaaaaa-0000-0000-0000-000000000004",
+  "claimedLevel": "ADVANCED",
+  "evidenceSummary": "Built and deployed three Spring Boot services for the payroll team.",
+  "evidenceUrl": "https://github.com/example/payroll-services"
+}

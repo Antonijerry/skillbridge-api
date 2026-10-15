@@ -164,9 +164,6 @@ Success: `204 No Content`, empty body.
 | 404 | NOT_FOUND | No assessment with that id |
 | 409 | ASSESSMENT_NOT_EDITABLE | Status is not PENDING |
 
-### 6. List skills: `GET /api/skills`
-Purpose: read-only list of the seeded skill catalogue, so a client can find skill ids.
-Success: `200 OK`, body = array of `{ "id", "name", "description", "category", "active" }` ordered by name.
 
 ## Seed data (Week 1)
 Dummy data only, loaded by a Flyway seed migration (planned for milestone M6). Fixed ids so examples can be copied and run.

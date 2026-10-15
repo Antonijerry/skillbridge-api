@@ -25,7 +25,7 @@ flowchart LR
 |---|---|
 | Design: one-pager, work plan, ERD, API spec, business rules | Done, see [documentation](#documentation) |
 | Application skeleton, PostgreSQL in Docker, Flyway schema (V1 core tables, V2 assessment history) | Done, verified on a fresh database |
-| Skill assessment CRUD endpoints | Being implemented |
+| Skill assessment CRUD endpoints | Done, verified with 16 sample requests (see requests/) |
 | Authentication, verification, opportunities, applications | Planned for Week 2 |
 | Tests, OpenAPI docs, deployment | Planned for Week 3 |
 
@@ -52,7 +52,7 @@ docker compose up -d db
 
 Stop everything with `docker compose down`. Add `-v` to also delete the local database.
 
-## Planned API (Week 1 scope)
+## API (Week 1)
 | Method | Path | Purpose |
 |---|---|---|
 | POST | `/api/skill-assessments` | Claim a skill with evidence |
@@ -62,7 +62,14 @@ Stop everything with `docker compose down`. Add `-v` to also delete the local da
 | DELETE | `/api/skill-assessments/{id}` | Withdraw a claim while PENDING |
 | GET | `/api/skills` | Read-only skill catalogue |
 
-Every error will use one format, `{ "error": { "code", "message", "details?" } }`, and no response will expose a stack trace. Full contract: [`docs/api-spec.md`](docs/api-spec.md).
+Every error uses one format ... no response exposes a stack trace. Full contract: [`docs/api-spec.md`](docs/api-spec.md).
+
+Try it (Windows PowerShell; on macOS or Linux use `curl`):
+```bash
+curl.exe -i http://localhost:8080/api/skill-assessments
+curl.exe -i -X POST http://localhost:8080/api/skill-assessments -H "Content-Type: application/json" -d "@requests/post-ok.json"
+```
+More request bodies are in [`requests/`](requests/). Seeded employee and skill ids are listed in [`docs/api-spec.md`](docs/api-spec.md).
 
 ## Data model
 ![ERD](docs/erd.png)

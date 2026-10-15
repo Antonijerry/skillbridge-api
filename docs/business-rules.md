@@ -45,7 +45,7 @@ Legend: Y = allowed, own = only your own records, creator = creator of the oppor
 | Endpoint | Anonymous | EMPLOYEE | MANAGER | ADMIN | Week |
 |---|---|---|---|---|---|
 | POST /api/auth/register, POST /api/auth/login | Y | Y | Y | Y | 2 |
-| GET /api/skills | Open in Week 1, - from Week 2 | Y | Y | Y | 1 |
+| GET /api/skills | - | Y | Y | Y | 2 |.
 | GET /api/skills/{id} | - | Y | Y | Y | 2 |
 | POST /api/skills | - | - | - | Y | 2 |
 | POST /api/skill-assessments | Open in Week 1, - from Week 2 | own | own | own | 1 |

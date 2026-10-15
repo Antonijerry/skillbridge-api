@@ -24,14 +24,15 @@ flowchart LR
 | Area | State |
 |---|---|
 | Design: one-pager, work plan, ERD, API spec, business rules | Done, see [documentation](#documentation) |
-| Application skeleton, PostgreSQL in Docker, Flyway schema | Done, verified from a clean clone |
+| Application skeleton, PostgreSQL in Docker, Flyway schema (V1 core tables, V2 assessment history) | Done, verified on a fresh database |
 | Skill assessment CRUD endpoints | Being implemented |
 | Authentication, verification, opportunities, applications | Planned for Week 2 |
 | Tests, OpenAPI docs, deployment | Planned for Week 3 |
 
 ## Quick start
 
-**Requirement:** [Docker Desktop](https://www.docker.com/products/docker-desktop/), running. Nothing else: no JDK, Maven or PostgreSQL. The first build needs internet and takes several minutes (it downloads images and dependencies), so don't stop it if it looks quiet. Later starts take seconds.
+**Requirement:** [Docker Desktop](https://www.docker.com/products/docker-desktop/), running. Nothing else: no JDK, Maven or PostgreSQL. The first build needs internet and takes several minutes (it downloads images and dependencies), so don't stop it if it looks quiet. Later starts take seconds. Ports **8080** (API) and **5433** (database) must be free.
+
 ### Option 1: Docker only (recommended)
 ```bash
 git clone https://github.com/Antonijerry/skillbridge-api.git
@@ -69,8 +70,9 @@ Every error will use one format, `{ "error": { "code", "message", "details?" } }
 Six entities: Employee, Skill, SkillAssessment, Opportunity, OpportunityRequirement, Application. Opportunity-to-Skill and Employee-to-Opportunity are many-to-many, through `opportunity_requirements` and `applications`. The current schema creates the first three tables; the rest arrive in a Week 2 migration.
 
 ## Engineering decisions
-- **The database enforces the rules too.** One claim per employee and skill, no self-review and the review-state rules are UNIQUE and CHECK constraints, so bad data cannot get in even if application code has a bug.
-- **Flyway owns the schema.** Hibernate only validates it (`ddl-auto: validate`).
+- **The database enforces the rules too.** At most one open (PENDING) claim per employee and skill (a partial unique index; history is kept), no self-review and the review-state rules are UNIQUE and CHECK constraints, so bad data cannot get in even if application code has a bug.
+- **Verified claims are never edited.** VERIFIED and REJECTED assessments are immutable history; a rejected employee resubmits, and a higher level is a new claim, so no one can promote themselves without review.
+- **Flyway owns the schema.** Hibernate only validates it (`ddl-auto: validate`). Schema changes are new migrations, never edits to an applied one.
 - **Layered, package-by-feature structure.** Controller, service and repository per feature; DTOs at the API boundary, entities never exposed.
 - **Secrets stay out of Git.** Configuration comes from environment variables; only `.env.example` is committed.
 
@@ -87,7 +89,8 @@ More in [`docs/design-decisions.md`](docs/design-decisions.md) and [`docs/busine
 ## Troubleshooting
 | Problem | Fix |
 |---|---|
-| `port is already allocated` | Change `DB_PORT` in `.env` to a free port, then `docker compose down` and start again |
+| `Bind for 0.0.0.0:8080 failed: port is already allocated` | Something else uses port 8080. Run `docker compose down` in any older copy of this project, or stop the program using 8080 (`netstat -ano \| findstr :8080` on Windows), then start again |
+| `port is already allocated` for the database | Change `DB_PORT` in `.env` to a free port, then `docker compose down` and start again |
 | `password authentication failed` | Either you changed `DB_PASSWORD` after the first start (run `docker compose down -v`, which deletes only the local database), or another PostgreSQL is using your `DB_PORT` |
 | Docker command not found or engine error | Start Docker Desktop and wait until it reports running |
 | `Cannot resolve placeholder 'DB_USER'` (Option 2) | Create `.env` from `.env.example` in the repo root |

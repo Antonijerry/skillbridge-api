@@ -13,7 +13,8 @@ Diagram: docs/erd.png (exported from dbdiagram.io). Source of the diagram is the
 | Employee applies to Opportunity | **many-to-many** | applications (carries status) |
 
 ## Constraints the database enforces
-- skill_assessments: one row per (employee, skill); reviewer_id must differ from employee_id;
+- skill_assessments: many rows per (employee, skill) over time, but at most one PENDING
+  per pair (partial unique index); reviewer_id must differ from employee_id;
   PENDING means no reviewer, VERIFIED or REJECTED means reviewer and reviewed_at are set.
 - opportunity_requirements: one row per (opportunity, skill).
 - applications: one row per (employee, opportunity).
@@ -97,12 +98,12 @@ Table skill_assessments [headercolor: #D9822B] {
   updated_at       timestamptz       [not null]
 
   indexes {
-    (employee_id, skill_id) [unique, name: 'uq_assessment_employee_skill']
+    (employee_id, skill_id) [name: 'ix_assessment_employee_skill']
     status
     skill_id
   }
 
-  Note: 'MAIN ENTITY (Week 1 CRUD). One claim per employee and skill.'
+  Note: 'MAIN ENTITY (Week 1 CRUD). History per employee and skill. A partial unique index (employee_id, skill_id) WHERE status = PENDING allows one open claim at a time. dbdiagram cannot draw partial indexes, so this is documented here and in the migration.'
 }
 
 Table opportunities [headercolor: #7A4FB5] {

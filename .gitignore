@@ -1,0 +1,17 @@
+# Build output
+target/
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+
+# Secrets: only the example file is ever committed
+.env
+.env.*
+!.env.example
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db

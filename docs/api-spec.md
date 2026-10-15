@@ -11,6 +11,7 @@ at the start of Week 2, before any code. Any change to a built endpoint edits th
 - Text input is trimmed; a blank optional field counts as "not provided".
 - Week 1 has **no authentication** and every endpoint is open. `employeeId` is sent in the body
   as a temporary stand-in; Week 2 removes it and takes the employee from the login token.
+- Skill levels are ordered BEGINNER < INTERMEDIATE < ADVANCED < EXPERT. "Same or higher" below uses this order.
 
 ### Error format (every error, no exceptions)
 ```json
@@ -30,7 +31,8 @@ at the start of Week 2, before any code. Any change to a built endpoint edits th
 | 400 | BAD_REQUEST | Malformed JSON, unknown enum value, invalid UUID in path or query |
 | 404 | NOT_FOUND | Valid UUID, but no such record (including the employee or skill in a body) |
 | 405 | METHOD_NOT_ALLOWED | Method not supported on that path |
-| 409 | DUPLICATE_ASSESSMENT | The employee already has an assessment for that skill |
+| 409 | PENDING_CLAIM_EXISTS | The employee already has a PENDING assessment for that skill |
+| 409 | ALREADY_VERIFIED | The employee already has a VERIFIED assessment for that skill at the same or a higher level |
 | 409 | ASSESSMENT_NOT_EDITABLE | Edit or delete attempted on a non-PENDING assessment |
 | 409 | SKILL_INACTIVE | The skill exists but is inactive |
 | 500 | INTERNAL_ERROR | Unexpected failure; details are logged server-side only |
@@ -51,6 +53,20 @@ at the start of Week 2, before any code. Any change to a built endpoint edits th
 | createdAt | timestamp | |
 | updatedAt | timestamp | |
 
+### Assessment history rules
+These rules apply to every assessment endpoint and mirror business rules BR-2, BR-3, BR-17 in docs/business-rules.md.
+1. An employee can have many assessments for the same skill over time, but **at most one PENDING** per employee and skill.
+2. Only PENDING assessments can be edited (PUT) or withdrawn (DELETE). VERIFIED and REJECTED rows are immutable history.
+3. A new claim is refused if the employee already has a VERIFIED assessment for that skill at the **same or a higher level**.
+   Claiming a higher level than the verified one is allowed and starts a new PENDING claim; the old VERIFIED row keeps counting
+   until the new claim is reviewed.
+4. After a REJECTED claim, the employee resubmits with a new `POST`. The rejected row stays as history.
+5. Withdrawing a PENDING claim deletes it permanently (known limitation, see the end of this file).
+
+Check order on `POST` and on a level change in `PUT`: first `ALREADY_VERIFIED`, then `PENDING_CLAIM_EXISTS`.
+The service checks both for a friendly message; the database partial unique index `uq_assessment_one_pending`
+is the safety net for two simultaneous requests, and a violation of it is also returned as `409 PENDING_CLAIM_EXISTS`.
+
 ## Week 1 endpoints
 
 ### 1. Claim a skill: `POST /api/skill-assessments`
@@ -63,7 +79,10 @@ Request body:
 | skillId | uuid | yes | Must exist and be active |
 | claimedLevel | enum | yes | BEGINNER, INTERMEDIATE, ADVANCED or EXPERT |
 | evidenceSummary | string | yes | 10 to 1000 characters after trimming |
-| evidenceUrl | string | no | Starts with http:// or https://, at most 500 characters |
+| evidenceUrl | string | no | `http://` or `https://` followed by at least one character, at most 500 characters |
+
+The summary and URL limits are identical to the database constraints `ck_assessment_summary_length` and
+`ck_assessment_url_format`, so a request that passes validation can never fail on a database check.
 
 Example request:
 ```json
@@ -83,11 +102,17 @@ Success: `201 Created`, header `Location: /api/skill-assessments/{id}`, body = s
 | 400 | VALIDATION_ERROR | Missing or invalid field |
 | 400 | BAD_REQUEST | Malformed JSON, unknown enum value |
 | 404 | NOT_FOUND | employeeId or skillId does not exist |
-| 409 | DUPLICATE_ASSESSMENT | That employee already claimed that skill |
+| 409 | ALREADY_VERIFIED | The employee has a VERIFIED assessment for that skill at the same or a higher level |
+| 409 | PENDING_CLAIM_EXISTS | The employee already has a PENDING assessment for that skill |
 | 409 | SKILL_INACTIVE | The skill is inactive |
 
+Example 409 body:
+```json
+{ "error": { "code": "PENDING_CLAIM_EXISTS", "message": "A pending claim for this skill already exists. Revise or withdraw it first." } }
+```
+
 ### 2. List assessments: `GET /api/skill-assessments`
-Purpose: list assessments, optionally filtered.
+Purpose: list assessments, optionally filtered. An employee and skill can appear more than once (history).
 
 Query parameters (all optional, combinable): `employeeId` (uuid), `skillId` (uuid), `status` (PENDING, VERIFIED or REJECTED).
 Success: `200 OK`, body = array of skill assessment objects ordered by `createdAt` ascending; `[]` when nothing matches.
@@ -108,6 +133,8 @@ Success: `200 OK`, body = skill assessment object.
 ### 4. Revise a claim: `PUT /api/skill-assessments/{id}`
 Purpose: change the claimed level and evidence while the claim is still `PENDING`.
 `PUT` replaces the editable fields: an omitted `evidenceUrl` clears it. Employee and skill cannot change.
+Changing `claimedLevel` is checked like a new claim: it cannot be set to a level already covered by a VERIFIED
+assessment for the same employee and skill. Otherwise an edit could bypass the `POST` rule.
 
 Request body:
 | Field | Type | Required | Rules |
@@ -123,10 +150,12 @@ Success: `200 OK`, body = the updated skill assessment object (`updatedAt` chang
 | 400 | VALIDATION_ERROR | Invalid field |
 | 400 | BAD_REQUEST | Invalid UUID, malformed JSON, unknown enum value |
 | 404 | NOT_FOUND | No assessment with that id |
-| 409 | ASSESSMENT_NOT_EDITABLE | Status is not PENDING |
+| 409 | ASSESSMENT_NOT_EDITABLE | Status is not PENDING (VERIFIED and REJECTED are history) |
+| 409 | ALREADY_VERIFIED | The new level is not above the employee's VERIFIED level for that skill |
 
 ### 5. Withdraw a claim: `DELETE /api/skill-assessments/{id}`
 Purpose: remove a claim that has not been reviewed. Allowed only while `PENDING`.
+The row is permanently deleted.
 Success: `204 No Content`, empty body.
 
 | Status | code | Cause |
@@ -140,9 +169,10 @@ Purpose: read-only list of the seeded skill catalogue, so a client can find skil
 Success: `200 OK`, body = array of `{ "id", "name", "description", "category", "active" }` ordered by name.
 
 ## Seed data (Week 1)
-Dummy data only, loaded by Flyway. Fixed ids so examples can be copied and run.
+Dummy data only, loaded by a Flyway seed migration (planned for milestone M6). Fixed ids so examples can be copied and run.
 - Employees: Ada (EMPLOYEE) `11111111-1111-1111-1111-111111111111`, Tunde (MANAGER) `22222222-2222-2222-2222-222222222222`, Chidi (ADMIN) `33333333-3333-3333-3333-333333333333`
 - Skills: `aaaaaaaa-0000-0000-0000-00000000000N` for N = 1 to 6 (Java, SQL, REST API Design, Spring Boot, Docker, Technical Writing)
+- Seed passwords are dummy BCrypt hashes, never real passwords.
 
 ## Planned (Week 2, not built; bodies specified before coding)
 | Method | Path | Purpose | Who | Success | Main errors |
@@ -163,3 +193,8 @@ Dummy data only, loaded by Flyway. Fixed ids so examples can be copied and run.
 | GET | /api/applications | Own applications, or applicants to your opportunities | Logged in | 200 | 401 |
 | PATCH | /api/applications/{id}/shortlist, /reject, /withdraw | Change application status | Creator or owner | 200 | 401, 403, 404, 409 |
 | PATCH | /api/employees/{id}/role, /active | Manage accounts | ADMIN | 200 | 400, 401, 403, 404 |
+
+## Known limitations (stated, not hidden)
+- Week 1 has no authentication. Anyone can send any `employeeId`; Week 2 removes the field and uses the login token.
+- Withdrawing (DELETE) a PENDING claim deletes it permanently, so withdrawn claims leave no history.
+- A VERIFIED level cannot be edited. To claim a higher level, submit a new claim.

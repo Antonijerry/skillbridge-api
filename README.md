@@ -60,9 +60,9 @@ Stop everything with `docker compose down`. Add `-v` to also delete the local da
 | GET | `/api/skill-assessments/{id}` | Get one |
 | PUT | `/api/skill-assessments/{id}` | Revise a claim while PENDING |
 | DELETE | `/api/skill-assessments/{id}` | Withdraw a claim while PENDING |
-| GET | `/api/skills` | Read-only skill catalogue |
 
-Every error uses one format ... no response exposes a stack trace. Full contract: [`docs/api-spec.md`](docs/api-spec.md).
+
+Every error uses one format, `{ "error": { "code", "message", "details?" } }`, and no response exposes a stack trace. Full contract: [`docs/api-spec.md`](docs/api-spec.md).
 
 Try it (Windows PowerShell; on macOS or Linux use `curl`):
 ```bash

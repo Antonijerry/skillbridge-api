@@ -42,4 +42,17 @@ Top 3 risks:
 3. Environment drift between local and deployed setups.
    Mitigation: schema only through Flyway migrations, and a containerised run documented and tested from a clean clone.
 
+Week 2 plan (Auth and robustness):
+- Respond to Week 1 feedback (docs/feedback-response.md) and keep an issue log with 5 or more entries (docs/issue-log.md)
+- Registration and login with BCrypt hashing and JWT; roles EMPLOYEE / MANAGER / ADMIN; 401 vs 403; the employee comes from the token, never the request body
+- JPA relationships replacing the plain UUID columns, plus related-data endpoints and read-only GET /api/skills
+- Verify/reject workflow (a reviewer can never review their own claim), opportunities with required skills, match percentage, applications
+- Validation on every input, one error format, a global handler, and edge cases (duplicates, deleting a parent with children, invalid ids)
+
+Week 3 plan (Quality and delivery):
+- Unit and integration tests including 400 / 401 / 403 / 404, a separate test database, one-command run and an honest coverage note
+- OpenAPI/Swagger docs, Postman collection, setup guide, security notes (secrets in env, CORS, rate limiting on auth routes) and performance notes (pagination, indexes)
+- Deployment, or a Docker run guide tested from a clean clone
+- Final package: README case study, 5-minute walkthrough video, technical reflection and declaration (including AI use)
+
 Data: dummy data only. No real personal data or passwords.

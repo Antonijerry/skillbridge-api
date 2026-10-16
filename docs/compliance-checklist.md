@@ -19,7 +19,7 @@ Type: M = mandatory in the guide, R = my own engineering recommendation.
 | W1-10 | Validation; 201 on create, 200 on success, 400 on bad input, 404 when not found | M | One request per case | 201, 200, 204, 400 (x4), 404 (x2), 409 (x4) shown | [x] |
 | W1-11 | Seed dummy data | M | Fresh DB has rows | Clean clone returned the 2 seeded assessments from a fresh database | [x] |
 | W1-12 | Sample requests (curl, Postman or .http) | M | A stranger can run them | requests/*.json with curl.exe commands in the README | [x] |
-| W1-13 | Git tag week-1 pushed before the deadline | M | Tag visible on GitHub | git ls-remote --tags | [ ] |
+| W1-13 | Git tag week-1 pushed before the deadline | M | Tag visible on GitHub | `git ls-remote --tags origin`: 361dbf3fcb0ee2b0602ac32d4d4986da3afbda80 refs/tags/week-1 | [x] |
 | W1-14 | 5-minute presentation: ERD, spec, a live request per endpoint | M | Timed rehearsal | Rehearsal time | [ ] |
 | W1-15 | Weekly update note and form submitted; confirmation within 1 hour | M | Confirmation received | Confirmation email | [ ] |
 
@@ -52,7 +52,7 @@ Type: M = mandatory in the guide, R = my own engineering recommendation.
 | W3-9 | README or case study: problem, data model, architecture, decisions, limitations | M | Complete | README.md | [ ] |
 | W3-10 | 5-minute walkthrough video: live requests and one technical decision | M | Recorded | Video link | [ ] |
 | W3-11 | Technical reflection | M | Changes, risks, next steps | docs/technical-reflection.md | [ ] |
-| W3-12 | Declaration: own work, libraries, boilerplates, material AI use | M | Honest and complete | docs/declaration.md | [ ] |
+| W3-12 | Declaration: own work, libraries, boilerplates, material AI use | M | Honest and complete | docs/declaration.md (running record in docs/ai-usage-log.md) | [ ] |
 | W3-13 | Tag week-3, exported OpenAPI or collection as backup, update note | M | Tag pushed; confirmation received | git ls-remote, email | [ ] |
 
 ## Final checklist (from the guide)
@@ -64,8 +64,8 @@ Type: M = mandatory in the guide, R = my own engineering recommendation.
 - [ ] No secrets, keys or real passwords in the repo or history
 
 ## Red-flag self-audit (run before every tag)
-- [x] No secrets or real credentials in the repo or history (`git log -p` search; only .env.example committed)
-- [x] No plain-text passwords anywhere, including seed data
+- [x] No secrets or real credentials in the repo or history (`git log -p` search shows only variable names and placeholders; `git ls-files .env` empty, `.env` ignored)
+- [x] No plain-text passwords anywhere, including seed data (V3 uses a fake, non-working hash placeholder)
 - [x] Every input validated; no stack traces in any response (checked on the 16 Week 1 requests)
 - [x] Every implemented endpoint matches docs/api-spec.md
 - [x] README steps run from a clean clone (verified on a fresh clone and a fresh database)

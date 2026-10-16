@@ -103,4 +103,4 @@ More in [`docs/design-decisions.md`](docs/design-decisions.md) and [`docs/busine
 | `Cannot resolve placeholder 'DB_USER'` (Option 2) | Create `.env` from `.env.example` in the repo root |
 
 ## Documentation
-[One-pager](docs/idea-one-pager.md) · [Work plan](docs/work-plan.md) · [ERD](docs/erd.md) · [API spec](docs/api-spec.md) · [Business rules](docs/business-rules.md) · [Design decisions](docs/design-decisions.md)
+[One-pager](docs/idea-one-pager.md) · [Work plan](docs/work-plan.md) · [ERD](docs/erd.md) · [API spec](docs/api-spec.md) · [Business rules](docs/business-rules.md) · [Design decisions](docs/design-decisions.md) . [google drive folder](https://drive.google.com/drive/folders/1ROEeMVWImOB_7qMYVerrN0eNHuI2byCL?usp=sharing)

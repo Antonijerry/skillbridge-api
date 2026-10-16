@@ -64,8 +64,8 @@ Type: M = mandatory in the guide, R = my own engineering recommendation.
 - [ ] No secrets, keys or real passwords in the repo or history
 
 ## Red-flag self-audit (run before every tag)
-- [ ] No secrets or real credentials in the repo or history (`git log -p` search; only .env.example committed)
-- [ ] No plain-text passwords anywhere, including seed data
+- [x] No secrets or real credentials in the repo or history (`git log -p` search; only .env.example committed)
+- [x] No plain-text passwords anywhere, including seed data
 - [x] Every input validated; no stack traces in any response (checked on the 16 Week 1 requests)
 - [x] Every implemented endpoint matches docs/api-spec.md
 - [x] README steps run from a clean clone (verified on a fresh clone and a fresh database)

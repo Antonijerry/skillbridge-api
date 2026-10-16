@@ -1,5 +1,5 @@
 # SkillBridge API
-Track: Backend Development   Stack: Java 21, Spring Boot 4.0.8, Spring Data JPA, PostgreSQL, Flyway, Spring Security + JWT, Docker
+Track: Backend Development   Stack: Java 21, Spring Boot 4.0.8, Spring Data JPA, PostgreSQL, Flyway, Spring Security + JWT (from Week 2), Docker
 
 Target user: An employee in a mid-sized organisation seeking internal mobility or a stretch role.
 Internal hiring managers and talent leads take part as the people who verify that employee's skills.
@@ -16,13 +16,15 @@ Week 1 main entity: SkillAssessment (full CRUD). Employee and Skill are seeded r
 
 Core flow: POST /api/auth/login -> POST /api/skill-assessments -> PATCH /api/skill-assessments/{id}/verify
 -> GET /api/opportunities -> GET /api/opportunities/{id}/match -> POST /api/applications
+Week 1 builds the skill-assessment part of this flow (POST, GET list, GET one, PUT, DELETE on
+/api/skill-assessments) with seeded employees and skills. Login, verify, opportunities, match and
+applications are specified and arrive in Week 2.
 
 In scope:
-- Skill assessments with an external proof URL and a manager review workflow (PENDING / VERIFIED / REJECTED)
+- Skill assessments with an external proof URL, history per employee and skill (at most one PENDING claim at a time) and a manager review workflow (PENDING / VERIFIED / REJECTED)
 - Internal opportunities with required skills and minimum levels (DRAFT / PUBLISHED / CLOSED)
-- Match percentage per opportunity, calculated only from VERIFIED assessments
-- Applications to published opportunities
-- Stateless JWT authentication, BCrypt password hashing, roles EMPLOYEE / MANAGER / ADMIN and ownership checks
+- Match percentage per opportunity, calculated only from VERIFIED assessments, and applications to published opportunities
+- Stateless JWT authentication, BCrypt password hashing, roles EMPLOYEE / MANAGER / ADMIN and ownership checks (Week 2)
 - Versioned database schema and seed data through Flyway
 
 Out of scope:

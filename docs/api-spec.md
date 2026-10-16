@@ -176,6 +176,7 @@ Dummy data only, loaded by a Flyway seed migration (planned for milestone M6). F
 |---|---|---|---|---|---|
 | POST | /api/auth/register | Create an EMPLOYEE account | Anyone | 201 | 400, 409 |
 | POST | /api/auth/login | Obtain a JWT | Anyone | 200 | 400, 401 |
+| GET | /api/skills | List skills | Logged in | 200 | 401 |
 | GET | /api/skills/{id} | One skill | Logged in | 200 | 400, 404 |
 | POST | /api/skills | Add a skill | ADMIN | 201 | 400, 401, 403, 409 |
 | PATCH | /api/skill-assessments/{id}/verify | Verify a claim (not your own) | MANAGER, ADMIN | 200 | 401, 403, 404, 409 |

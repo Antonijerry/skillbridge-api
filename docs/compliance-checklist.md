@@ -7,18 +7,18 @@ Type: M = mandatory in the guide, R = my own engineering recommendation.
 ## Week 1
 | ID | Requirement | Type | Done when | Evidence | Status |
 |---|---|---|---|---|---|
-| W1-1 | Idea one-pager in the guide's template | M | All template fields filled | docs/idea-one-pager.md | [ ] |
-| W1-2 | One-page work plan with top 3 risks | M | Per-week deliverables and 3 risks | docs/work-plan.md | [ ] |
-| W1-3 | Public repo, starter README (idea, stack, how to run), .env.example | M | Opens in a private window; no real values | Repo URL | [ ] |
-| W1-4 | At least 3 entities with key fields and types | M | Six entities documented | docs/erd.md | [ ] |
-| W1-5 | ERD showing one-to-many, many-to-many and keys | M | Both join entities drawn | docs/erd.png | [ ] |
-| W1-6 | API spec written before coding: method, path, purpose, request, response, status codes | M | Every endpoint complete; spec commit precedes controller commits | docs/api-spec.md and git log | [ ] |
-| W1-7 | Design decisions noted | M | Reasons and alternatives recorded | docs/design-decisions.md | [ ] |
-| W1-8 | Project, DB connection and migrations | M | App starts; Flyway applies V1 | Terminal output | [ ] |
-| W1-9 | Create, list, get, update, delete for the main entity (SkillAssessment) | M | Each endpoint matches the spec | Request output | [ ] |
-| W1-10 | Validation; 201 on create, 200 on success, 400 on bad input, 404 when not found | M | One request per case | Request output | [ ] |
-| W1-11 | Seed dummy data | M | Fresh DB has rows | psql output | [ ] |
-| W1-12 | Sample requests (curl, Postman or .http) | M | A stranger can run them | requests/*.http | [ ] |
+| W1-1 | Idea one-pager in the guide's template | M | All template fields filled | docs/idea-one-pager.md | [x] |
+| W1-2 | One-page work plan with top 3 risks | M | Per-week deliverables and 3 risks | docs/work-plan.md | [x] |
+| W1-3 | Public repo, starter README (idea, stack, how to run), .env.example | M | Opens in a private window; no real values | https://github.com/Antonijerry/skillbridge-api (public, checked in a private window) | [x] |
+| W1-4 | At least 3 entities with key fields and types | M | Six entities documented | docs/erd.md | [x] |
+| W1-5 | ERD showing one-to-many, many-to-many and keys | M | Both join entities drawn | docs/erd.png | [x] |
+| W1-6 | API spec written before coding: method, path, purpose, request, response, status codes | M | Every endpoint complete; spec commit precedes controller commits | docs/api-spec.md; spec commit 74e5088 precedes controller commit 1b28807 | [x] |
+| W1-7 | Design decisions noted | M | Reasons and alternatives recorded | docs/design-decisions.md | [x] |
+| W1-8 | Project, DB connection and migrations | M | App starts; Flyway applies migrations | Clean-clone log: V1, V2, V3 applied, "Started SkillbridgeApiApplication" | [x] |
+| W1-9 | Create, list, get, update, delete for the main entity (SkillAssessment) | M | Each endpoint matches the spec | 16 sample requests run against the running API, each status as specified | [x] |
+| W1-10 | Validation; 201 on create, 200 on success, 400 on bad input, 404 when not found | M | One request per case | 201, 200, 204, 400 (x4), 404 (x2), 409 (x4) shown | [x] |
+| W1-11 | Seed dummy data | M | Fresh DB has rows | Clean clone returned the 2 seeded assessments from a fresh database | [x] |
+| W1-12 | Sample requests (curl, Postman or .http) | M | A stranger can run them | requests/*.json with curl.exe commands in the README | [x] |
 | W1-13 | Git tag week-1 pushed before the deadline | M | Tag visible on GitHub | git ls-remote --tags | [ ] |
 | W1-14 | 5-minute presentation: ERD, spec, a live request per endpoint | M | Timed rehearsal | Rehearsal time | [ ] |
 | W1-15 | Weekly update note and form submitted; confirmation within 1 hour | M | Confirmation received | Confirmation email | [ ] |
@@ -66,10 +66,17 @@ Type: M = mandatory in the guide, R = my own engineering recommendation.
 ## Red-flag self-audit (run before every tag)
 - [ ] No secrets or real credentials in the repo or history (`git log -p` search; only .env.example committed)
 - [ ] No plain-text passwords anywhere, including seed data
-- [ ] Every input validated; no stack traces in any response
-- [ ] Every implemented endpoint matches docs/api-spec.md
-- [ ] README steps run from a clean clone
+- [x] Every input validated; no stack traces in any response (checked on the 16 Week 1 requests)
+- [x] Every implemented endpoint matches docs/api-spec.md
+- [x] README steps run from a clean clone (verified on a fresh clone and a fresh database)
 - [ ] Work is original, not a tutorial API with the names changed
+
+## Known limitations at Week 1 (stated, not hidden)
+- No authentication: employeeId is sent in the request body until Week 2.
+- Assessments reference employees and skills by plain UUID columns; JPA relationships arrive in Week 2.
+- GET /api/skills is specified for Week 2 and not built.
+- Withdrawing a PENDING claim deletes it permanently.
+- No hosted deployment; a Docker run guide is provided.
 
 ## My own recommendations (not required by the guide)
 - R1 UUID primary keys

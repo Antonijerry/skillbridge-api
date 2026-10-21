@@ -26,6 +26,7 @@ services:
       DB_NAME: ${DB_NAME:-skillbridge}
       DB_USER: ${DB_USER:-skillbridge}
       DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required, copy .env.example to .env}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required, see .env.example}
     ports:
       - "8080:8080"
 

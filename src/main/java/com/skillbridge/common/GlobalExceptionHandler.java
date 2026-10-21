@@ -66,6 +66,9 @@ public class GlobalExceptionHandler {
             return body(HttpStatus.CONFLICT, "PENDING_CLAIM_EXISTS",
                     "A pending claim for this skill already exists. Revise or withdraw it first.", null);
         }
+        if (cause.contains("uq_employees_email")) {
+            return body(HttpStatus.CONFLICT, "EMAIL_TAKEN", "An account with this email already exists", null);
+        }
         log.error("Unexpected data integrity violation", ex);
         return body(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Unexpected error", null);
     }

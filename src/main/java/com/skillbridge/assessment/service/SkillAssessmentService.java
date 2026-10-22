@@ -3,8 +3,10 @@ package com.skillbridge.assessment.service;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.skillbridge.assessment.domain.AssessmentStatus;
 import com.skillbridge.assessment.domain.ClaimedLevel;
@@ -14,6 +16,7 @@ import com.skillbridge.assessment.dto.CreateAssessmentRequest;
 import com.skillbridge.assessment.dto.UpdateAssessmentRequest;
 import com.skillbridge.assessment.repository.SkillAssessmentRepository;
 import com.skillbridge.common.ApiException;
+import com.skillbridge.employee.repository.EmployeeRepository;
 import com.skillbridge.security.CurrentUser;
 import com.skillbridge.skill.domain.Skill;
 import com.skillbridge.skill.repository.SkillRepository;
@@ -30,10 +33,13 @@ public class SkillAssessmentService {
 
     private final SkillAssessmentRepository assessments;
     private final SkillRepository skills;
+    private final EmployeeRepository employees;
 
-    public SkillAssessmentService(SkillAssessmentRepository assessments, SkillRepository skills) {
+    public SkillAssessmentService(SkillAssessmentRepository assessments, SkillRepository skills,
+                                  EmployeeRepository employees) {
         this.assessments = assessments;
         this.skills = skills;
+        this.employees = employees;
     }
 
     public AssessmentResponse create(CurrentUser actor, CreateAssessmentRequest req) {
@@ -50,7 +56,7 @@ public class SkillAssessmentService {
         }
         SkillAssessment saved = assessments.saveAndFlush(new SkillAssessment(
                 employeeId, req.skillId(), req.claimedLevel(), req.evidenceUrl(), req.evidenceSummary()));
-        return AssessmentResponse.from(saved);
+        return AssessmentResponse.from(saved, skill.getName());
     }
 
     @Transactional(readOnly = true)
@@ -64,9 +70,19 @@ public class SkillAssessmentService {
             if (status != null) predicates.add(cb.equal(root.get("status"), status));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
-        return assessments.findAll(filter, Sort.by("createdAt").ascending()).stream()
-                .map(AssessmentResponse::from)
-                .toList();
+        return toResponses(assessments.findAll(filter, Sort.by("createdAt").ascending()));
+    }
+
+    /** GET /api/employees/{id}/skill-assessments: the employee themselves, or a MANAGER or ADMIN. */
+    @Transactional(readOnly = true)
+    public List<AssessmentResponse> listForEmployee(CurrentUser actor, UUID employeeId, AssessmentStatus status) {
+        if (actor.isEmployee() && !actor.owns(employeeId)) {
+            throw ApiException.forbidden();
+        }
+        if (!employees.existsById(employeeId)) {
+            throw ApiException.notFound("Employee not found");
+        }
+        return list(actor, employeeId, null, status);
     }
 
     @Transactional(readOnly = true)
@@ -75,7 +91,7 @@ public class SkillAssessmentService {
         if (actor.isEmployee() && !actor.owns(assessment.getEmployeeId())) {
             throw ApiException.forbidden();
         }
-        return AssessmentResponse.from(assessment);
+        return toResponse(assessment);
     }
 
     public AssessmentResponse update(CurrentUser actor, UUID id, UpdateAssessmentRequest req) {
@@ -84,7 +100,7 @@ public class SkillAssessmentService {
         requirePending(assessment);
         rejectIfAlreadyVerified(assessment.getEmployeeId(), assessment.getSkillId(), req.claimedLevel());
         assessment.revise(req.claimedLevel(), req.evidenceSummary(), req.evidenceUrl());
-        return AssessmentResponse.from(assessments.saveAndFlush(assessment));
+        return toResponse(assessments.saveAndFlush(assessment));
     }
 
     public void delete(CurrentUser actor, UUID id) {
@@ -97,13 +113,13 @@ public class SkillAssessmentService {
     public AssessmentResponse verify(CurrentUser actor, UUID id, String comment) {
         SkillAssessment assessment = findForReview(actor, id);
         assessment.verify(actor.id(), comment);
-        return AssessmentResponse.from(assessments.saveAndFlush(assessment));
+        return toResponse(assessments.saveAndFlush(assessment));
     }
 
     public AssessmentResponse reject(CurrentUser actor, UUID id, String comment) {
         SkillAssessment assessment = findForReview(actor, id);
         assessment.reject(actor.id(), comment);
-        return AssessmentResponse.from(assessments.saveAndFlush(assessment));
+        return toResponse(assessments.saveAndFlush(assessment));
     }
 
     /** Order matters: role (403), existence (404), own claim (403), state (409). */
@@ -145,5 +161,18 @@ public class SkillAssessmentService {
             throw ApiException.conflict("ALREADY_VERIFIED",
                     "This skill is already verified at the same or a higher level");
         }
+    }
+
+    private AssessmentResponse toResponse(SkillAssessment assessment) {
+        String skillName = skills.findById(assessment.getSkillId()).map(Skill::getName).orElse(null);
+        return AssessmentResponse.from(assessment, skillName);
+    }
+
+    /** One query for all skill names in the list, instead of one query per row. */
+    private List<AssessmentResponse> toResponses(List<SkillAssessment> list) {
+        List<UUID> skillIds = list.stream().map(SkillAssessment::getSkillId).distinct().toList();
+        Map<UUID, String> names = skills.findAllById(skillIds).stream()
+                .collect(Collectors.toMap(Skill::getId, Skill::getName));
+        return list.stream().map(a -> AssessmentResponse.from(a, names.get(a.getSkillId()))).toList();
     }
 }

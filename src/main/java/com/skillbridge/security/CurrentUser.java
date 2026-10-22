@@ -18,4 +18,8 @@ public record CurrentUser(UUID id, Role role) {
     public boolean canReview() {
         return role == Role.MANAGER || role == Role.ADMIN;
     }
+
+    public boolean isAdmin() {
+        return role == Role.ADMIN;
+    }
 }

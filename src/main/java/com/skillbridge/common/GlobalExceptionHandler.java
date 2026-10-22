@@ -69,6 +69,9 @@ public class GlobalExceptionHandler {
         if (cause.contains("uq_employees_email")) {
             return body(HttpStatus.CONFLICT, "EMAIL_TAKEN", "An account with this email already exists", null);
         }
+        if (cause.contains("uq_skills_name_lower")) {
+            return body(HttpStatus.CONFLICT, "SKILL_NAME_TAKEN", "A skill with this name already exists", null);
+        }
         log.error("Unexpected data integrity violation", ex);
         return body(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Unexpected error", null);
     }

@@ -58,6 +58,14 @@ public class Employee {
         this.createdAt = Instant.now();
     }
 
+    public void changeRole(Role role) {
+        this.role = role;
+    }
+
+    public void changeActive(boolean active) {
+        this.active = active;
+    }
+
     public UUID getId() { return id; }
     public String getFullName() { return fullName; }
     public String getEmail() { return email; }

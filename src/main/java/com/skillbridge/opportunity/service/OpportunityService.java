@@ -93,7 +93,7 @@ public class OpportunityService {
             throw ApiException.conflict("REQUIREMENT_EXISTS", "The opportunity already requires this skill");
         }
         OpportunityRequirement added = opportunity.addRequirement(skill.getId(), req.minimumLevel());
-        opportunities.saveAndFlush(opportunity);
+        opportunities.flush();   // the opportunity is already managed: flushing cascades the insert and assigns the id
         return new RequirementResponse(added.getId(), added.getSkillId(), skill.getName(), added.getMinimumLevel());
     }
 
@@ -105,7 +105,7 @@ public class OpportunityService {
                 .findFirst()
                 .orElseThrow(() -> ApiException.notFound("Requirement not found"));
         opportunity.removeRequirement(requirement);
-        opportunities.saveAndFlush(opportunity);
+        opportunities.flush();
     }
 
     public OpportunityResponse publish(CurrentUser actor, UUID id) {

@@ -25,4 +25,12 @@ public class ApiException extends RuntimeException {
     public static ApiException conflict(String code, String message) {
         return new ApiException(HttpStatus.CONFLICT, code, message);
     }
+
+    public static ApiException forbidden() {
+        return new ApiException(HttpStatus.FORBIDDEN, "FORBIDDEN", "You are not allowed to do this");
+    }
+
+    public static ApiException unauthorized() {
+        return new ApiException(HttpStatus.UNAUTHORIZED, "UNAUTHORIZED", "Authentication is required");
+    }
 }

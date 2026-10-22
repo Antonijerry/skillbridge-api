@@ -7,9 +7,11 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-/** Limits mirror ck_assessment_summary_length and ck_assessment_url_format in the database. */
+/**
+ * Limits mirror ck_assessment_summary_length and ck_assessment_url_format in the database.
+ * There is no employeeId: the employee is always the logged-in user.
+ */
 public record CreateAssessmentRequest(
-        @NotNull(message = "is required") UUID employeeId,
         @NotNull(message = "is required") UUID skillId,
         @NotNull(message = "is required") ClaimedLevel claimedLevel,
         @NotNull(message = "is required")

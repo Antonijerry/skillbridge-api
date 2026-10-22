@@ -22,4 +22,8 @@ public record CurrentUser(UUID id, Role role) {
     public boolean isAdmin() {
         return role == Role.ADMIN;
     }
+
+    public boolean isStaff() {
+        return role == Role.MANAGER || role == Role.ADMIN;
+    }
 }

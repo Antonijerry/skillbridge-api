@@ -72,6 +72,9 @@ public class GlobalExceptionHandler {
         if (cause.contains("uq_skills_name_lower")) {
             return body(HttpStatus.CONFLICT, "SKILL_NAME_TAKEN", "A skill with this name already exists", null);
         }
+        if (cause.contains("uq_requirement_opportunity_skill")) {
+            return body(HttpStatus.CONFLICT, "REQUIREMENT_EXISTS", "The opportunity already requires this skill", null);
+        }
         log.error("Unexpected data integrity violation", ex);
         return body(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Unexpected error", null);
     }

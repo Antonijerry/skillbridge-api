@@ -94,6 +94,31 @@ public class SkillAssessmentService {
         assessments.delete(assessment);
     }
 
+    public AssessmentResponse verify(CurrentUser actor, UUID id, String comment) {
+        SkillAssessment assessment = findForReview(actor, id);
+        assessment.verify(actor.id(), comment);
+        return AssessmentResponse.from(assessments.saveAndFlush(assessment));
+    }
+
+    public AssessmentResponse reject(CurrentUser actor, UUID id, String comment) {
+        SkillAssessment assessment = findForReview(actor, id);
+        assessment.reject(actor.id(), comment);
+        return AssessmentResponse.from(assessments.saveAndFlush(assessment));
+    }
+
+    /** Order matters: role (403), existence (404), own claim (403), state (409). */
+    private SkillAssessment findForReview(CurrentUser actor, UUID id) {
+        if (!actor.canReview()) {
+            throw ApiException.forbidden();
+        }
+        SkillAssessment assessment = find(id);
+        if (actor.owns(assessment.getEmployeeId())) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "FORBIDDEN", "You cannot review your own claim");
+        }
+        requirePending(assessment);
+        return assessment;
+    }
+
     private SkillAssessment find(UUID id) {
         return assessments.findById(id).orElseThrow(() -> ApiException.notFound("Skill assessment not found"));
     }

@@ -88,6 +88,22 @@ public class SkillAssessment {
         this.evidenceUrl = evidenceUrl;
     }
 
+    /** The caller has already checked the role, ownership and that the status is PENDING. */
+    public void verify(UUID reviewerId, String comment) {
+        markReviewed(AssessmentStatus.VERIFIED, reviewerId, comment);
+    }
+
+    public void reject(UUID reviewerId, String comment) {
+        markReviewed(AssessmentStatus.REJECTED, reviewerId, comment);
+    }
+
+    private void markReviewed(AssessmentStatus newStatus, UUID reviewerId, String comment) {
+        this.status = newStatus;
+        this.reviewerId = reviewerId;
+        this.reviewedAt = Instant.now();
+        this.reviewComment = comment;
+    }
+
     public UUID getId() { return id; }
     public UUID getEmployeeId() { return employeeId; }
     public UUID getSkillId() { return skillId; }

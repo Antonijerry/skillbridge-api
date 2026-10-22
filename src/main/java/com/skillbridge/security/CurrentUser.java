@@ -14,4 +14,8 @@ public record CurrentUser(UUID id, Role role) {
     public boolean owns(UUID employeeId) {
         return id.equals(employeeId);
     }
+
+    public boolean canReview() {
+        return role == Role.MANAGER || role == Role.ADMIN;
+    }
 }

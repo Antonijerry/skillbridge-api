@@ -5,24 +5,14 @@ import java.util.List;
 import java.util.UUID;
 
 import com.skillbridge.assessment.domain.AssessmentStatus;
-import com.skillbridge.assessment.dto.AssessmentResponse;
-import com.skillbridge.assessment.dto.CreateAssessmentRequest;
-import com.skillbridge.assessment.dto.UpdateAssessmentRequest;
+import com.skillbridge.assessment.dto.*;
 import com.skillbridge.assessment.service.SkillAssessmentService;
 import com.skillbridge.security.CurrentUserResolver;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /** Thin controller: resolve who is calling, parse, delegate, shape the HTTP response. Rules live in the service. */
 @RestController
@@ -68,5 +58,18 @@ public class SkillAssessmentController {
     public ResponseEntity<Void> delete(@AuthenticationPrincipal Jwt jwt, @PathVariable("id") UUID id) {
         service.delete(currentUsers.from(jwt), id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/verify")
+    public AssessmentResponse verify(@AuthenticationPrincipal Jwt jwt, @PathVariable("id") UUID id,
+                                     @Valid @RequestBody(required = false) VerifyRequest request) {
+        String comment = request == null ? null : request.reviewComment();
+        return service.verify(currentUsers.from(jwt), id, comment);
+    }
+
+    @PatchMapping("/{id}/reject")
+    public AssessmentResponse reject(@AuthenticationPrincipal Jwt jwt, @PathVariable("id") UUID id,
+                                     @Valid @RequestBody RejectRequest request) {
+        return service.reject(currentUsers.from(jwt), id, request.reviewComment());
     }
 }

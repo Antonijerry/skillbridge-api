@@ -97,6 +97,9 @@ public class GlobalExceptionHandler {
         if (cause.contains("uq_requirement_opportunity_skill")) {
             return body(HttpStatus.CONFLICT, "REQUIREMENT_EXISTS", "The opportunity already requires this skill", null);
         }
+        if (cause.contains("uq_application_employee_opportunity")) {
+            return body(HttpStatus.CONFLICT, "ALREADY_APPLIED", "You have already applied to this opportunity", null);
+        }
         log.error("Unexpected data integrity violation", ex);
         return body(HttpStatus.INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", "Unexpected error", null);
     }

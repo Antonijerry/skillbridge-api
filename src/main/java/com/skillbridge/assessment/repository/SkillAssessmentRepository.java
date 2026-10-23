@@ -1,6 +1,7 @@
 package com.skillbridge.assessment.repository;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 import com.skillbridge.assessment.domain.AssessmentStatus;
@@ -16,4 +17,6 @@ public interface SkillAssessmentRepository
 
     boolean existsByEmployeeIdAndSkillIdAndStatusAndClaimedLevelIn(
             UUID employeeId, UUID skillId, AssessmentStatus status, Collection<ClaimedLevel> levels);
+    List<SkillAssessment> findByEmployeeIdAndStatusAndSkillIdIn(UUID employeeId, AssessmentStatus status,
+                                                                Collection<UUID> skillIds);
 }

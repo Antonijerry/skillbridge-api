@@ -1,0 +1,7 @@
+package com.skillbridge.application.dto;
+
+import java.util.UUID;
+
+import jakarta.validation.constraints.NotNull;
+
+public record ApplyRequest(@NotNull(message = "is required") UUID opportunityId) { }

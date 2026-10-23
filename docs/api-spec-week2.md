@@ -1,3 +1,14 @@
+
+> **Historical document.** This is the Week 2 plan, written before any Week 2 code. The contract that describes what was built is [`api-spec.md`](api-spec.md). Where the build differs from this plan:
+>
+> | Planned | Built | Why |
+> |---|---|---|
+> | Match fields `requirementsTotal`, `details`, `eligible` | `totalRequirements` and `requirements`; no `eligible` | `eligible` is the same as `matchPercentage` being 100 |
+> | Applying to your own opportunity gives 403 | 409 `INVALID_STATE` | BR-13 says violations of the apply rules return 409 |
+> | `GET /api/opportunities/{id}/applications` | `GET /api/applications?opportunityId={id}` | The filter gives creators and admins the same result |
+> | `POST /api/applications` returns a `Location` header | No `Location` header | There is no get-one-application endpoint |
+> | Shortlist, reject and withdraw were a stretch goal | Built and verified | Done |
+
 ## Week 2: authentication, review workflow, opportunities and applications
 
 Status: **specified before any Week 2 code.** Each endpoint below is built to match exactly; a change to a built endpoint edits this file in the same commit.

@@ -26,16 +26,16 @@ Type: M = mandatory in the guide, R = my own engineering recommendation.
 ## Week 2
 | ID | Requirement | Type | Done when | Evidence | Status |
 |---|---|---|---|---|---|
-| W2-1 | List each piece of Week 1 feedback and what changed or why not | M | Every item answered | docs/feedback-response.md | [ ] |
-| W2-2 | Issue log with 5 or more entries (bug, options, fix) | M | 5 or more entries | docs/issue-log.md | [ ] |
-| W2-3 | Sign-up and login with JWT or sessions | M | Both work | Request output | [ ] |
-| W2-4 | Passwords hashed with bcrypt or argon2; never stored or logged in plain text | M | Hash visible in the DB; logs checked | DB query, log search | [ ] |
-| W2-5 | Only logged-in users create or change data | M | No token gives 401 | Request output | [ ] |
-| W2-6 | Ownership checks and a role | M | Wrong owner or role gives 403 | Request output | [ ] |
-| W2-7 | Relationships with endpoints to fetch related data | M | Related data endpoints match the spec | Request output | [ ] |
-| W2-8 | Validate every input | M | Bad input gives 400 everywhere | Request output | [ ] |
-| W2-9 | One consistent error format and a global handler; no stack traces | M | Same shape for every error | Request output | [ ] |
-| W2-10 | Edge cases: duplicates, deleting a parent with children, invalid ids | M | Each handled deliberately | Request output | [ ] |
+| W2-1 | List each piece of Week 1 feedback and what changed or why not | M | Every item answered | docs/feedback-response.md (states honestly that no feedback had arrived) | [x] |
+| W2-2 | Issue log with 5 or more entries (bug, options, fix) | M | 5 or more entries | docs/issue-log.md, entries 9 to 20 from Week 2 | [x] |
+| W2-3 | Sign-up and login with JWT or sessions | M | Both work | Register 201, login 200 and a token accepted on a protected call; smoke test and Postman collection | [x] |
+| W2-4 | Passwords hashed with bcrypt or argon2; never stored or logged in plain text | M | Hash visible in the DB; logs checked | `length(password_hash)` = 60 and a `crypt()` match for the demo accounts; startup log search for "generated security password" printed nothing | [x] |
+| W2-5 | Only logged-in users create or change data | M | No token gives 401 | Every `/api` endpoint except register and login answered 401 without a token (W2-1 checks, smoke test) | [x] |
+| W2-6 | Ownership checks and a role | M | Wrong owner or role gives 403 | W2-3 to W2-8 scripts: employee 403 on review and create, other manager 403, ADMIN allowed | [x] |
+| W2-7 | Relationships with endpoints to fetch related data | M | Related data endpoints match the spec | `/employees/{id}/skill-assessments`, opportunities with their requirements, applications list, `/opportunities/{id}/match`; W2-7 scripts | [x] |
+| W2-8 | Validate every input | M | Bad input gives 400 everywhere | W2-8 section 2: 21 limit cases all 400, plus malformed JSON, unknown enums and malformed ids | [x] |
+| W2-9 | One consistent error format and a global handler; no stack traces | M | Same shape for every error | W2-8 section 1: 415, 400, 406, 401, 405, 404 all in the one format; `ApiErrorController` for `/error` | [x] |
+| W2-10 | Edge cases: duplicates, deleting a parent with children, invalid ids | M | Each handled deliberately | 409s for duplicates (email, skill name, requirement, pending claim, application); deleting a DRAFT removes its requirements; 400 and 404 for bad ids | [x] |
 | W2-11 | Updated sample requests, tag week-2, update note | M | Tag pushed; confirmation received | git ls-remote, email | [ ] |
 
 ## Week 3
@@ -64,19 +64,19 @@ Type: M = mandatory in the guide, R = my own engineering recommendation.
 - [ ] No secrets, keys or real passwords in the repo or history
 
 ## Red-flag self-audit (run before every tag)
-- [x] No secrets or real credentials in the repo or history (`git log -p` search shows only variable names and placeholders; `git ls-files .env` empty, `.env` ignored)
-- [x] No plain-text passwords anywhere, including seed data (V3 uses a fake, non-working hash placeholder)
-- [x] Every input validated; no stack traces in any response (checked on the 16 Week 1 requests)
+- [ ] No secrets or real credentials in the repo or history (Week 2 re-check: `git ls-files .env` empty and a history search for a real JWT secret prints nothing; tick after running it)
+- [x] No plain-text passwords stored anywhere, including seed data (the seed holds a BCrypt hash of a documented dummy demo password; the plaintext appears only in the README, the Postman collection and the smoke script, as a dummy value)
+- [x] Every input validated; no stack traces in any response (checked on the Week 1 requests and in W2-8)
 - [x] Every implemented endpoint matches docs/api-spec.md
-- [x] README steps run from a clean clone (verified on a fresh clone and a fresh database)
+- [ ] README steps run from a clean clone (tick after the Week 2 clean-clone test, with the date and the `ALL 34 CHECKS PASSED` line)
 - [ ] Work is original, not a tutorial API with the names changed
 
-## Known limitations at Week 1 (stated, not hidden)
-- No authentication: employeeId is sent in the request body until Week 2.
-- Assessments reference employees and skills by plain UUID columns; JPA relationships arrive in Week 2.
-- GET /api/skills is specified for Week 2 and not built.
+## Known limitations at Week 2 (stated, not hidden)
+- No automated tests and no hosted deployment (Week 3); a Docker run guide is provided.
 - Withdrawing a PENDING claim deletes it permanently.
-- No hosted deployment; a Docker run guide is provided.
+- Lists are not paginated; a withdrawn application cannot be re-submitted.
+- The seeded demo accounts share a known password; they must not ship to a real deployment.
+- Full list with reasons: docs/issue-log.md. (The Week 1 limitations about authentication and `GET /api/skills` are fixed; assessments still reference employees and skills by id, now recorded as design decision 20.)
 
 ## My own recommendations (not required by the guide)
 - R1 UUID primary keys

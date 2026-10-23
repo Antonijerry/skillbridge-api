@@ -27,7 +27,7 @@ function Check($label, $actual, $expected) {
     if ("$actual" -eq "$expected") { "PASS  $label" }
     else { $script:fails++; "FAIL  $label (got '$actual', expected '$expected')" }
 }
-function Rows($r) { return @($r.Json | ForEach-Object { $_ }) }
+function Rows($r) { return ,@($r.Json | ForEach-Object { $_ }) }
 
 "waiting for the app..."
 $tries = 0
@@ -85,11 +85,11 @@ Check "match: percentage" $match.Json.matchPercentage 50
 $app = Call POST $tA "/api/applications" @{ opportunityId = $oid }
 Check "Ada applies" $app.Status 201
 Check "application is SUBMITTED" $app.Json.status "SUBMITTED"
-$pid = $app.Json.id
+$applicationId = $app.Json.id
 Check "Ada cannot apply twice" (Call POST $tA "/api/applications" @{ opportunityId = $oid }).Status 409
 Check "Tunde cannot apply to his own opportunity" (Call POST $tM "/api/applications" @{ opportunityId = $oid }).Status 409
 Check "Tunde sees one application" (Rows (Call GET $tM "/api/applications?opportunityId=$oid" $null)).Count 1
-Check "Tunde shortlists" (Call PATCH $tM "/api/applications/$pid/shortlist" $null).Json.status "SHORTLISTED"
+Check "Tunde shortlists" (Call PATCH $tM "/api/applications/$applicationId/shortlist" $null).Json.status "SHORTLISTED"
 Check "Ada sees SHORTLISTED" (Rows (Call GET $tA "/api/applications" $null))[0].status "SHORTLISTED"
 Check "Chidi (admin) sees all" ((Rows (Call GET $tC "/api/applications" $null)).Count -ge 1) "True"
 

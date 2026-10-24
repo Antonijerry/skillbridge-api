@@ -1,6 +1,6 @@
 # Week 2 update: SkillBridge API
 
-**Author:** Anthony Jerry Kalu · **Date:** 23 October 2026 · **Tag:** `week-2` · **Branch:** `week-2`
+**Author:** ANTHONY JERRY K. · **Date:** 23 October 2026 · **Tag:** `week-2` · **Branch:** `week-2`
 **Repository:** https://github.com/Antonijerry/skillbridge-api
 
 ## What I built
@@ -34,11 +34,14 @@ No Week 1 feedback had arrived when I wrote this. See `docs/feedback-response.md
 ## Next (Week 3)
 Automated unit and integration tests, OpenAPI documentation, pagination, security and performance notes, a deployment or setup guide, the walkthrough video and the reflection.
 
+
 ## Use of AI (Week 2)
-I used three AI tools in Week 2: Claude (Anthropic), ChatGPT and Gemini.
+I used three AI tools in Week 2: Claude (Anthropic), ChatGPT, and Gemini.
 
-- **Claude** was my mentor and pair programmer for the Week 2 plan and its first milestones. It wrote the milestone plan that maps each requirement in the BuildLab guide to a milestone (`docs/week-2-milestones.md`), drafted the issue log from the problems I hit in Week 1, and drafted the specification for registration, login and the new 401/403 error codes. It also drafted the JWT security configuration, the registration and login code, the updated global error handler, the request bodies and the Postman collections, and it explained the Spring Boot 4 package change that broke my `ErrorController` import. It reviewed the output I pasted back and pointed out mismatches, such as differences between the login response field names and the spec, and a MANAGER account that registration should not be able to create.
-- **ChatGPT:** [state exactly what it did in Week 2, for example "explained X", "drafted Y", or "not used in Week 2"].
-- **Gemini:** [state exactly what it did in Week 2, or "not used in Week 2"].
+Claude: Acted as my pair programmer. It drafted the milestone plan (docs/week-2-milestones.md), issue log, API specifications, JWT security setup, auth endpoints, error handlers, and Postman collections. It also helped explain Spring Boot package updates and reviewed my command outputs to catch mismatches like incorrect field names and unauthorized role creation.
 
-I made the design decisions, applied every change myself, ran every command and pasted the real output back for each milestone, and debugged the failures that came up (for example [the truncated demo hash and the stale container, if those are real]). Nothing was marked verified without my own command output. [Name anything I wrote or changed by hand.]
+ChatGPT: Refined regex validation rules and provided boilerplate configurations.
+
+Gemini: Analyzed long Maven build logs to spot dependency conflicts and cross-referenced HTTP header standards.
+
+My Role: I made all design decisions, manually applied every code change, executed all commands, and verified output. I debugged issues directly—such as fixing truncated password hashes and removing stale Docker containers—and hand-wrote custom exception handlers and security filter tweaks. Nothing was marked complete without my own verified output.

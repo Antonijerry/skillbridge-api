@@ -64,11 +64,11 @@ Type: M = mandatory in the guide, R = my own engineering recommendation.
 - [ ] No secrets, keys or real passwords in the repo or history
 
 ## Red-flag self-audit (run before every tag)
-- [ ] No secrets or real credentials in the repo or history (Week 2 re-check: `git ls-files .env` empty and a history search for a real JWT secret prints nothing; tick after running it)
+- [x] No secrets or real credentials in the repo or history (24 Oct 2026: `git ls-files .env` prints nothing and a history search for a 32+ character JWT secret prints nothing)
 - [x] No plain-text passwords stored anywhere, including seed data (the seed holds a BCrypt hash of a documented dummy demo password; the plaintext appears only in the README, the Postman collection and the smoke script, as a dummy value)
 - [x] Every input validated; no stack traces in any response (checked on the Week 1 requests and in W2-8)
 - [x] Every implemented endpoint matches docs/api-spec.md
-- [ ] README steps run from a clean clone (tick after the Week 2 clean-clone test, with the date and the `ALL 34 CHECKS PASSED` line)
+- [x] README steps run from a clean clone (23 Oct 2026: a fresh clone of the `week-2` branch passed the smoke test, ALL 34 CHECKS PASSED)
 - [ ] Work is original, not a tutorial API with the names changed
 
 ## Known limitations at Week 2 (stated, not hidden)

@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
+import com.skillbridge.common.PageParams;
 import com.skillbridge.security.CurrentUserResolver;
 import com.skillbridge.skill.dto.CreateSkillRequest;
 import com.skillbridge.skill.dto.SkillResponse;
@@ -33,10 +34,13 @@ public class SkillController {
     }
 
     @GetMapping
-    public List<SkillResponse> list(@AuthenticationPrincipal Jwt jwt,
-                                    @RequestParam(name = "active", required = false) Boolean active) {
+    public ResponseEntity<List<SkillResponse>> list(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(name = "active", required = false) Boolean active,
+            @RequestParam(name = "page", required = false) Integer page,
+            @RequestParam(name = "size", required = false) Integer size) {
         currentUsers.from(jwt);   // re-checks that the account still exists and is active
-        return service.list(active);
+        return service.list(active, PageParams.of(page, size)).toResponse();
     }
 
     @GetMapping("/{id}")

@@ -4,11 +4,15 @@ import java.util.List;
 import java.util.UUID;
 
 import com.skillbridge.common.ApiException;
+import com.skillbridge.common.PageParams;
+import com.skillbridge.common.PagedResult;
 import com.skillbridge.security.CurrentUser;
 import com.skillbridge.skill.domain.Skill;
 import com.skillbridge.skill.dto.CreateSkillRequest;
 import com.skillbridge.skill.dto.SkillResponse;
 import com.skillbridge.skill.repository.SkillRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,11 +27,13 @@ public class SkillService {
     }
 
     @Transactional(readOnly = true)
-    public List<SkillResponse> list(Boolean active) {
-        List<Skill> found = active == null
-                ? skills.findAllByOrderByNameAsc()
-                : skills.findByActiveOrderByNameAsc(active);
-        return found.stream().map(SkillResponse::from).toList();
+    public PagedResult<SkillResponse> list(Boolean active, PageParams paging) {
+        Pageable pageable = paging.pageable(PageParams.BY_NAME);
+        Page<Skill> page = active == null
+                ? skills.findAll(pageable)
+                : skills.findByActive(active, pageable);
+        return new PagedResult<>(page.getContent().stream().map(SkillResponse::from).toList(),
+                page.getTotalElements());
     }
 
     @Transactional(readOnly = true)

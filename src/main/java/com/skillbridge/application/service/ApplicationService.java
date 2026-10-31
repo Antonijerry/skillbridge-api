@@ -2,6 +2,7 @@ package com.skillbridge.application.service;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -10,10 +11,17 @@ import com.skillbridge.application.domain.ApplicationStatus;
 import com.skillbridge.application.dto.ApplicationResponse;
 import com.skillbridge.application.repository.ApplicationRepository;
 import com.skillbridge.common.ApiException;
+import com.skillbridge.common.PageParams;
+import com.skillbridge.common.PagedResult;
 import com.skillbridge.opportunity.domain.Opportunity;
 import com.skillbridge.opportunity.domain.OpportunityStatus;
 import com.skillbridge.opportunity.repository.OpportunityRepository;
 import com.skillbridge.security.CurrentUser;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
+import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,20 +57,31 @@ public class ApplicationService {
     }
 
     @Transactional(readOnly = true)
-    public List<ApplicationResponse> list(CurrentUser actor, ApplicationStatus status, UUID opportunityId) {
-        List<Application> rows;
-        if (actor.isAdmin()) {
-            rows = applications.findAllByOrderByCreatedAtDesc();
-        } else if (actor.isStaff()) {
-            rows = applications.findVisibleTo(actor.id());
-        } else {
-            rows = applications.findByEmployeeIdOrderByCreatedAtDesc(actor.id());
-        }
-        return rows.stream()
-                .filter(a -> status == null || a.getStatus() == status)
-                .filter(a -> opportunityId == null || a.getOpportunityId().equals(opportunityId))
-                .map(ApplicationResponse::from)
-                .toList();
+    public PagedResult<ApplicationResponse> list(CurrentUser actor, ApplicationStatus status, UUID opportunityId,
+                                                 PageParams paging) {
+        Specification<Application> filter = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (actor.isEmployee()) {
+                predicates.add(cb.equal(root.get("employeeId"), actor.id()));
+            } else if (!actor.isAdmin()) {
+                // A MANAGER sees their own applications plus applications to opportunities they created.
+                Subquery<UUID> mine = query.subquery(UUID.class);
+                Root<Opportunity> o = mine.from(Opportunity.class);
+                mine.select(o.<UUID>get("id")).where(cb.equal(o.get("createdBy"), actor.id()));
+                predicates.add(cb.or(cb.equal(root.get("employeeId"), actor.id()),
+                        root.get("opportunityId").in(mine)));
+            }
+            if (status != null) {
+                predicates.add(cb.equal(root.get("status"), status));
+            }
+            if (opportunityId != null) {
+                predicates.add(cb.equal(root.get("opportunityId"), opportunityId));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        Page<Application> page = applications.findAll(filter, paging.pageable(PageParams.NEWEST_FIRST));
+        return new PagedResult<>(page.getContent().stream().map(ApplicationResponse::from).toList(),
+                page.getTotalElements());
     }
 
     @Transactional

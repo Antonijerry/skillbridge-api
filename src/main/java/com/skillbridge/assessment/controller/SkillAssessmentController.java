@@ -7,6 +7,7 @@ import java.util.UUID;
 import com.skillbridge.assessment.domain.AssessmentStatus;
 import com.skillbridge.assessment.dto.*;
 import com.skillbridge.assessment.service.SkillAssessmentService;
+import com.skillbridge.common.PageParams;
 import com.skillbridge.security.CurrentUserResolver;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -35,12 +36,15 @@ public class SkillAssessmentController {
     }
 
     @GetMapping
-    public List<AssessmentResponse> list(
+    public ResponseEntity<List<AssessmentResponse>> list(
             @AuthenticationPrincipal Jwt jwt,
             @RequestParam(name = "employeeId", required = false) UUID employeeId,
             @RequestParam(name = "skillId", required = false) UUID skillId,
-            @RequestParam(name = "status", required = false) AssessmentStatus status) {
-        return service.list(currentUsers.from(jwt), employeeId, skillId, status);
+            @RequestParam(name = "status", required = false) AssessmentStatus status,
+            @RequestParam(name = "page", required = false) Integer page,
+            @RequestParam(name = "size", required = false) Integer size) {
+        return service.listPage(currentUsers.from(jwt), employeeId, skillId, status, PageParams.of(page, size))
+                .toResponse();
     }
 
     @GetMapping("/{id}")

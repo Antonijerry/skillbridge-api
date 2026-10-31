@@ -8,6 +8,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import com.skillbridge.common.ApiException;
+import com.skillbridge.common.PageParams;
+import com.skillbridge.common.PagedResult;
 import com.skillbridge.opportunity.domain.Opportunity;
 import com.skillbridge.opportunity.domain.OpportunityRequirement;
 import com.skillbridge.opportunity.domain.OpportunityStatus;
@@ -19,6 +21,8 @@ import com.skillbridge.opportunity.repository.OpportunityRepository;
 import com.skillbridge.security.CurrentUser;
 import com.skillbridge.skill.domain.Skill;
 import com.skillbridge.skill.repository.SkillRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,19 +49,29 @@ public class OpportunityService {
     }
 
     @Transactional(readOnly = true)
-    public List<OpportunityResponse> list(CurrentUser actor, OpportunityStatus status) {
+    public PagedResult<OpportunityResponse> list(CurrentUser actor, OpportunityStatus status, PageParams paging) {
         OpportunityStatus effective = status;
         if (actor.isEmployee()) {
             // An EMPLOYEE only ever sees PUBLISHED opportunities.
             if (status != null && status != OpportunityStatus.PUBLISHED) {
-                return List.of();
+                return new PagedResult<>(List.of(), 0);
             }
             effective = OpportunityStatus.PUBLISHED;
         }
-        List<Opportunity> found = effective == null
-                ? opportunities.findAllByOrderByCreatedAtDesc()
-                : opportunities.findByStatusOrderByCreatedAtDesc(effective);
-        return toResponses(found);
+        Pageable pageable = paging.pageable(PageParams.NEWEST_FIRST);
+        // Query 1: the page itself, with no collection join, so LIMIT/OFFSET happens in the database.
+        Page<Opportunity> page = effective == null
+                ? opportunities.findAll(pageable)
+                : opportunities.findByStatus(effective, pageable);
+        List<UUID> ids = page.getContent().stream().map(Opportunity::getId).toList();
+        if (ids.isEmpty()) {
+            return new PagedResult<>(List.of(), page.getTotalElements());
+        }
+        // Query 2: load the requirements for just these opportunities, then restore the page order.
+        Map<UUID, Opportunity> byId = opportunities.findByIdIn(ids).stream()
+                .collect(Collectors.toMap(Opportunity::getId, o -> o));
+        List<Opportunity> ordered = ids.stream().map(byId::get).toList();
+        return new PagedResult<>(toResponses(ordered), page.getTotalElements());
     }
 
     @Transactional(readOnly = true)

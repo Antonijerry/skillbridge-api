@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
+import com.skillbridge.common.PageParams;
 import com.skillbridge.opportunity.domain.OpportunityStatus;
 import com.skillbridge.opportunity.dto.AddRequirementRequest;
 import com.skillbridge.opportunity.dto.OpportunityRequest;
@@ -38,9 +39,12 @@ public class OpportunityController {
     }
 
     @GetMapping
-    public List<OpportunityResponse> list(@AuthenticationPrincipal Jwt jwt,
-                                          @RequestParam(name = "status", required = false) OpportunityStatus status) {
-        return service.list(currentUsers.from(jwt), status);
+    public ResponseEntity<List<OpportunityResponse>> list(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(name = "status", required = false) OpportunityStatus status,
+            @RequestParam(name = "page", required = false) Integer page,
+            @RequestParam(name = "size", required = false) Integer size) {
+        return service.list(currentUsers.from(jwt), status, PageParams.of(page, size)).toResponse();
     }
 
     @GetMapping("/{id}")

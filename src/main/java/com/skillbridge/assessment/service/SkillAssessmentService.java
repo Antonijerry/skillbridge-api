@@ -16,11 +16,14 @@ import com.skillbridge.assessment.dto.CreateAssessmentRequest;
 import com.skillbridge.assessment.dto.UpdateAssessmentRequest;
 import com.skillbridge.assessment.repository.SkillAssessmentRepository;
 import com.skillbridge.common.ApiException;
+import com.skillbridge.common.PageParams;
+import com.skillbridge.common.PagedResult;
 import com.skillbridge.employee.repository.EmployeeRepository;
 import com.skillbridge.security.CurrentUser;
 import com.skillbridge.skill.domain.Skill;
 import com.skillbridge.skill.repository.SkillRepository;
 import jakarta.persistence.criteria.Predicate;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
@@ -174,5 +177,33 @@ public class SkillAssessmentService {
         Map<UUID, String> names = skills.findAllById(skillIds).stream()
                 .collect(Collectors.toMap(Skill::getId, Skill::getName));
         return list.stream().map(a -> AssessmentResponse.from(a, names.get(a.getSkillId()))).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public PagedResult<AssessmentResponse> listPage(CurrentUser actor, UUID employeeId, UUID skillId,
+                                                    AssessmentStatus status, PageParams paging) {
+        // An EMPLOYEE only ever sees their own rows, whatever employeeId they send.
+        final UUID effectiveEmployeeId = actor.isEmployee() ? actor.id() : employeeId;
+        Specification<SkillAssessment> filter = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (effectiveEmployeeId != null) predicates.add(cb.equal(root.get("employeeId"), effectiveEmployeeId));
+            if (skillId != null) predicates.add(cb.equal(root.get("skillId"), skillId));
+            if (status != null) predicates.add(cb.equal(root.get("status"), status));
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        Page<SkillAssessment> page = assessments.findAll(filter, paging.pageable(PageParams.OLDEST_FIRST));
+        return new PagedResult<>(toResponses(page.getContent()), page.getTotalElements());
+    }
+
+    @Transactional(readOnly = true)
+    public PagedResult<AssessmentResponse> listForEmployeePage(CurrentUser actor, UUID employeeId,
+                                                               AssessmentStatus status, PageParams paging) {
+        if (actor.isEmployee() && !actor.owns(employeeId)) {
+            throw ApiException.forbidden();
+        }
+        if (!employees.existsById(employeeId)) {
+            throw ApiException.notFound("Employee not found");
+        }
+        return listPage(actor, employeeId, null, status, paging);
     }
 }

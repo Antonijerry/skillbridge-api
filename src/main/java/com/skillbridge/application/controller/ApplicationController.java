@@ -7,6 +7,7 @@ import com.skillbridge.application.domain.ApplicationStatus;
 import com.skillbridge.application.dto.ApplicationResponse;
 import com.skillbridge.application.dto.ApplyRequest;
 import com.skillbridge.application.service.ApplicationService;
+import com.skillbridge.common.PageParams;
 import com.skillbridge.security.CurrentUserResolver;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -42,10 +43,13 @@ public class ApplicationController {
     }
 
     @GetMapping
-    public List<ApplicationResponse> list(@AuthenticationPrincipal Jwt jwt,
-                                          @RequestParam(name = "status", required = false) ApplicationStatus status,
-                                          @RequestParam(name = "opportunityId", required = false) UUID opportunityId) {
-        return service.list(currentUsers.from(jwt), status, opportunityId);
+    public ResponseEntity<List<ApplicationResponse>> list(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(name = "status", required = false) ApplicationStatus status,
+            @RequestParam(name = "opportunityId", required = false) UUID opportunityId,
+            @RequestParam(name = "page", required = false) Integer page,
+            @RequestParam(name = "size", required = false) Integer size) {
+        return service.list(currentUsers.from(jwt), status, opportunityId, PageParams.of(page, size)).toResponse();
     }
 
     @PatchMapping("/{id}/shortlist")

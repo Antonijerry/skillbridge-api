@@ -1,7 +1,7 @@
 # Issue log
 
 Bugs and problems found while building SkillBridge API, the options considered and how each was fixed.
-Entries 1 to 8 were found during Week 1, entries 9 onward during Week 2. Newer entries are added at the bottom as they happen.
+Entries 1 to 8 were found during Week 1, entries 9 to 20 during Week 2 and entries 21 onward during Week 3. Newer entries are added at the bottom as they happen.
 
 | # | Found | Problem | Options considered | Decision and fix | Evidence |
 |---|---|---|---|---|---|
@@ -25,16 +25,27 @@ Entries 1 to 8 were found during Week 1, entries 9 onward during Week 2. Newer e
 | 18 | Week 2, W2-9 | The pasted demo hash was 59 characters (one lost), so no demo login worked. Editing V5 after it was applied was not enough because Flyway runs a migration only once | Edit the history table; reset the dev database | Found it by checking `length(password_hash)` and verifying with `crypt()`. Fixed the file (60 characters), confirmed the length by script, then rebuilt the dev database | `len` 60 for all three; smoke test passed |
 | 19 | Week 2, W2-9 | The smoke script failed with `Cannot overwrite variable PID because it is read-only` | Rename the variable | `$pid` is a reserved PowerShell variable. Renamed it to `$applicationId`. Fixed a list-count helper in the same pass | `ALL 34 CHECKS PASSED` |
 | 20 | Week 2, W2-7 | A row-count helper printed 1 for every list because Windows PowerShell 5.1 returns a JSON array from `ConvertFrom-Json` as one object, so the counts could not be trusted | Trust the status codes only; fix the helper and recount | Fixed the helper, wrote a recount script and re-ran it before marking the milestone verified | `w2-7-recount.ps1`: all counts as expected |
+| 21 | Week 3, W3-1 | The generated `contextLoads` test started the whole application against my development database (port 5433). Tests depended on a running dev database and could change its data | Keep it; an in-memory H2 database; a throwaway PostgreSQL per run | A shared base class starts one PostgreSQL 16 container with Testcontainers and Flyway builds the schema. H2 was rejected: the schema uses a partial unique index, CHECK constraints, `gen_random_uuid` and `timestamptz`, which H2 can accept differently | Before: JDBC URL `localhost:5433/skillbridge`. After: a random port and database `test`; 3 tests green |
+| 22 | Week 3, W3-1 | A new test class named `AuthSmokeIT` was never run (`Tests run: 1`) | Configure the Failsafe plugin; rename the class | Surefire runs `*Test` classes by default. Renamed the file and class to `AuthSmokeTest` | `Tests run: 3, Failures: 0` |
+| 23 | Week 3, W3-5 | Coverage measured 3% in the assessment service, the core of the product. My tests followed the rules I had thought of first, not the workflow that matters most | Add trivial tests to raise the number; test the workflow | Added one end-to-end journey test and 13 assessment-rule tests. The goal was covering the critical journey, not a percentage | 40.1% with 60 tests, 76.1% with 74 tests; `assessment.service` 3% to 77.7% |
+| 24 | Week 3, W3-6 | The opportunity list uses an entity graph that fetches requirements. Adding a `Pageable` to that query makes Hibernate page in memory, which looks like paging but loads every row | Accept it; drop the graph and load lazily; page the opportunities first and fetch requirements for those ids | Two queries: one page of opportunities with no join, then the requirements for just those ids, then the page order is restored. I did not search the full test log for Hibernate's in-memory paging warning, so this is verified by behaviour only | Test: page of 1 is the newest opportunity and still carries its requirement |
+| 25 | Week 3, W3-6 | The application list filtered `status` and `opportunityId` in memory after loading, so page 1 could be short or wrong once paging was added | Page first and filter afterwards; move the filters into the query | Moved the filters and the per-role visibility rule into a JPA `Specification`, the pattern the assessment list already used | Journey test lists the employee's one application; 96 tests green |
+| 26 | Week 3, W3-6b | The composite index `(status, created_at DESC, id DESC)` I added for the status-filtered list was not used by PostgreSQL. It preferred the plain `created_at` index and skipped rows | Keep it; drop it; test with skewed data | Measured and recorded honestly. A third of the test rows match, so 20 matches are found at once. The index stays for now as protection for a rare status, but it is unproven; dropping it needs a new migration because V6 is already applied | `docs/performance-notes.md`: Index Scan on `idx_opportunity_created`, 58 rows read |
+| 27 | Week 3, W3-7 | A rate limit on login would have broken the test suite, which logs in about a hundred times from one address | Raise the limit for everyone; turn it off in tests; a test profile | An `application-test.yaml` raises the limit for the suite, and the rate-limit tests set their own low limit | 96 tests green, including a 429 test |
+| 28 | Week 3, W3-7 | A comment in `SecurityConfig` contained a garbled character (`â€™`) from a file-encoding mix-up | Ignore it; fix it | Replaced it with a plain apostrophe while rewriting the file | Source diff |
 
-## Known limitations at the end of Week 2
+## Known limitations at the end of Week 3
 - Two reviewers acting on the same claim at the same instant: the last write wins. Optimistic locking with a version column would close it. Deferred.
-- The "account is still active" check runs in each controller through `CurrentUserResolver`. A future endpoint that forgets to call it would skip the check. Centralising it in one converter is a refactor for later.
+- The "account is still active" check runs in each controller through `CurrentUserResolver`. A future endpoint that forgets to call it would skip the check.
 - The error handler matches database constraint names by reading the error text. It works but is fragile.
 - Assessments, skills and employees reference each other by id (design decision 20); only an opportunity owns its requirements.
 - Changing an opportunity's requirements does not update its `updated_at`.
 - "A closing date in the future" is compared with today's date in UTC.
 - Withdrawing a PENDING claim deletes it permanently, so withdrawn claims leave no history.
-- Lists are not paginated.
-- A withdrawn application cannot be re-submitted (the V4 unique constraint is one application per employee and opportunity).
+- A withdrawn application cannot be re-submitted (one application per employee and opportunity).
 - A URL with invalid percent-encoding is rejected by the servlet container with a plain HTML 400 page, outside our error format.
-- The seeded demo accounts share a known password. This is acceptable for the project and must not ship to a real deployment.
+- Offset pagination gets slower on very deep pages; a cursor scheme would be the next step.
+- The rate limiter is in memory (per instance, reset on restart, fixed window) and keyed on the connection address.
+- The composite status index from V6 is unproven (entry 26).
+- No HTTPS in the application, no token revocation, no dependency scan (docs/security-notes.md).
+- The seeded demo accounts share a known password. Acceptable for the project; must not ship to a real deployment.

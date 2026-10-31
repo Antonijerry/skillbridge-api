@@ -8,58 +8,69 @@ This note says what is tested, what is not, and why. The numbers come from a JaC
 .\mvnw.cmd test
 ```
 
-- Docker must be running. The integration tests start a throwaway PostgreSQL 16 container (Testcontainers) and run all Flyway migrations (V1 to V5) against it. They never touch the development database on port 5433.
+- Docker must be running. The integration tests start a throwaway PostgreSQL 16 container (Testcontainers) and run all Flyway migrations (V1 to V6) against it. They never touch the development database on port 5433.
 - A full run takes about 2 to 3 minutes (most of it is Docker and Spring start-up). The unit tests alone take a few seconds:
-  `.\mvnw.cmd test "-Dtest=MatchServiceTest,ApplicationServiceTest,ClaimedLevelTest,RegisterRequestTest"`
+  `.\mvnw.cmd test "-Dtest=MatchServiceTest,ApplicationServiceTest,ClaimedLevelTest,RegisterRequestTest,PageParamsTest,AuthRateLimitFilterTest"`
 - The coverage report is written to `target/site/jacoco/index.html` (and `jacoco.csv`) by the same command.
 
 ## Result of the last full run (31 Oct 2026)
 
-`Tests run: 74, Failures: 0, Errors: 0, Skipped: 0, BUILD SUCCESS`
+`Tests run: 97, Failures: 0, Errors: 0, Skipped: 0, BUILD SUCCESS` (JaCoCo analysed 64 classes)
 
 | Type | Tests | Classes |
 |------|-------|---------|
-| Integration (Spring Boot, real PostgreSQL, full security chain) | 32 | SkillbridgeApiApplicationTests (1), AuthSmokeTest (2), AuthFailureTest (8), AccessControlTest (7), AssessmentRulesTest (13), SkillBridgeJourneyTest (1) |
-| Unit (Mockito, no database) | 42 | MatchServiceTest (15), ApplicationServiceTest (23), ClaimedLevelTest (1), RegisterRequestTest (3) |
+| Integration (Spring Boot, real PostgreSQL, full security chain) | 48 | SkillbridgeApiApplicationTests (1), AuthSmokeTest (2), AuthFailureTest (8), AccessControlTest (7), AssessmentRulesTest (13), SkillBridgeJourneyTest (1), PaginationTest (7), RateLimitIntegrationTest (1), CorsTest (3), SecurityBasicsTest (4), OpenApiDocsTest (1) |
+| Unit (Mockito, no database) | 49 | MatchServiceTest (15), ApplicationServiceTest (23), ClaimedLevelTest (1), RegisterRequestTest (3), PageParamsTest (3), AuthRateLimitFilterTest (4) |
 
 ## Measured coverage
 
-JaCoCo 0.8.12, instruction coverage, 59 production classes.
+JaCoCo 0.8.12, 64 production classes. Totals from the report's Total row of the final run:
 
-| | Covered | Missed | Coverage |
+| Metric | Missed | Total | Coverage |
 |---|---|---|---|
-| After the unit tests and auth/access tests only (60 tests) | 1,447 | 2,164 | 40.1% |
-| **After the journey and assessment tests (74 tests)** | **2,748** | **863** | **76.1%** |
+| **Instructions** | 960 | 4,238 | **77%** |
+| Branches | 106 | 262 | 59% |
+| Lines | 170 | 810 | 79% |
+| Methods | 54 | 300 | 82% |
+| Classes | 3 | 64 | 95% |
 
-By package, lowest first (final run):
+How it moved:
+
+| Run | Tests | Instructions covered | Coverage |
+|---|---|---|---|
+| Unit tests and auth/access tests only | 60 | 1,447 of 3,611 | 40.1% |
+| After the journey and assessment tests | 74 | 2,748 of 3,611 | 76.1% |
+| **Final: paging, rate limit, CORS, security and OpenAPI tests added** | **97** | **3,278 of 4,238** | **77%** |
+
+The last step added 627 instructions of production code (paging, the rate limiter, CORS, the OpenAPI config) and 530 of them are covered (about 85%, above the 76% of the code before), so the headline figure rose only by about one point. The untested remainder is mostly the same gaps as before, plus some paging code in a few services.
+
+By package, lowest first (final run, instruction coverage, rounded as JaCoCo prints it):
 
 | Package | Coverage |
 |---------|----------|
-| employee.service | 22.4% |
-| (root) application class | 37.5% |
-| employee.controller | 37.7% |
-| common | 40.7% |
-| skill.service | 44.8% |
-| opportunity.controller | 52.0% |
-| skill.controller | 57.4% |
-| opportunity.service | 68.3% |
-| employee.dto | 75.5% |
-| assessment.service | 77.7% |
-| assessment.controller | 78.1% |
-| assessment.dto | 79.5% |
-| application.controller | 84.7% |
-| opportunity.domain | 84.8% |
-| employee.domain | 89.7% |
-| application.service | 89.8% |
-| auth.dto | 89.8% |
-| skill.dto | 91.8% |
-| security | 92.1% |
-| assessment.domain | 93.6% |
-| auth.service | 95.5% |
-| opportunity.dto | 97.6% |
-| application.dto, auth.controller, skill.domain, application.domain | 100% |
+| employee.service | 22% |
+| employee.controller | 35% |
+| (root) application class | 37% |
+| common | 58% (branches 37%) |
+| opportunity.controller | 60% |
+| assessment.service | 65% (branches 47%) |
+| skill.service | 68% |
+| opportunity.service | 71% |
+| employee.dto | 75% |
+| application.service | 78% |
+| assessment.dto, assessment.controller | 79% |
+| skill.controller | 80% |
+| opportunity.domain | 84% |
+| application.controller | 85% |
+| auth.dto, employee.domain | 89% |
+| security | 91% |
+| skill.dto | 91% |
+| assessment.domain | 93% |
+| auth.service | 95% |
+| opportunity.dto | 97% |
+| application.dto, application.domain, skill.domain, config, auth.controller | 100% |
 
-The first run showed `assessment.service` at 3%. That was the largest gap, because verifying skills is the core of the product, so it was closed first. I did not add tests only to raise a percentage.
+`assessment.service` was 3% in the first run and 77.7% after the assessment tests, and is now 65%. The package grew with the paging and filter code in Week 3 and the new lines are mostly not reached by the assessment tests, so the percentage fell although no test was removed. It is still the biggest gap in the core workflow. The first run showed `assessment.service` at 3%. That was the largest gap, because verifying skills is the core of the product, so it was closed first. I did not add tests only to raise a percentage.
 
 ## What is tested
 
@@ -92,21 +103,28 @@ One test walks the whole product: admin creates a skill, employee claims a level
 - The level order BEGINNER < INTERMEDIATE < ADVANCED < EXPERT is locked by a test, because the match uses `compareTo`.
 - Request normalisation (trimmed name, trimmed and lower-cased email, password never altered, password never printed by `toString`).
 
+**Week 3 features (integration and unit)**
+- Paging on every list endpoint: `X-Total-Count`, a page past the end, and the invalid `page` and `size` values returning 400 (PaginationTest, PageParamsTest).
+- Rate limit on register and login: the request over the limit returns 429 `TOO_MANY_REQUESTS` with `Retry-After` (RateLimitIntegrationTest, AuthRateLimitFilterTest).
+- CORS: allowed and refused origins (CorsTest).
+- Security basics: injection-looking input, markup in text fields and error responses that must not leak internals (SecurityBasicsTest).
+- OpenAPI: `/v3/api-docs` is served without a token, is OpenAPI 3, describes `/api/skills` and declares the bearer scheme (OpenApiDocsTest). Swagger UI itself was checked by hand in a browser, not by a test.
+
 ## What is not tested, and why
 
 These gaps are read from the package figures above. The exact uncovered methods are in `target/site/jacoco/index.html`.
 
 | Gap | Evidence | Why it is not covered |
 |-----|----------|-----------------------|
-| Changing an employee's role or active status | employee.service 22.4%, employee.controller 37.7% | Lower risk than the verification workflow; not reached before the deadline. **Planned next if time allows.** |
-| Opportunity update, delete, remove requirement and close paths | opportunity.controller 52%, opportunity.service 68.3% | The publish and requirement-add paths are covered through the journey; the rest were not prioritised. |
-| Skill catalogue edge cases (for example duplicate skill name 409) | skill.service 44.8% | Creation is covered through the journey; the duplicate-name branch is not asserted. |
-| Some error-handler branches | common 40.7% | Uncommon exceptions (for example unsupported media type) are not all triggered. |
+| Changing an employee's role or active status | employee.service 22%, employee.controller 35% | Lower risk than the verification workflow; not reached. The largest remaining gap. |
+| Opportunity update, delete, remove requirement and close paths | opportunity.controller 60%, opportunity.service 71% | The publish and requirement-add paths are covered through the journey; the rest were not prioritised. |
+| Paging and filter branches inside the assessment service | assessment.service 65%, branches 47% | The core workflow is tested; some of the Week 3 list and filter code is not. |
+| Skill catalogue edge cases (for example duplicate skill name 409) | skill.service 68% | Creation is covered through the journey; the duplicate-name branch is not asserted. |
+| Some error-handler branches | common 58%, branches 37% | Uncommon exceptions are not all triggered. |
 | Tomcat's own HTML 400 for invalid percent-encoding in a URL | n/a | Raised before Spring sees the request, so our error format cannot apply. This is a documented known limitation (issue log), not a test gap. |
 | Concurrency (two simultaneous applications or claims racing on a unique constraint) | n/a | The database constraints exist, but a race test needs a multi-threaded setup that was out of scope. |
 | Performance and load | n/a | Not part of this suite; see `docs/performance-notes.md`. |
-| Deployment and Docker Compose | n/a | The container build and `docker compose up` were verified by hand, not by an automated test. |
-| Rate limiting, CORS and pagination | n/a | **Not yet implemented at the time of this run.** Tests for each will be added with the feature and this note updated. |
+| Deployment, Docker Compose and Swagger UI in a browser | n/a | Verified by hand (build, start, migration V5 to V6 on an existing database, register and login through Swagger UI), not by an automated test. |
 
 ## Limits of this evidence
 

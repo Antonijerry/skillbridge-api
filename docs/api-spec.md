@@ -21,11 +21,11 @@ Week 3 added pagination on list endpoints, rate limiting on the auth routes and 
 ### Error format (every error, no exceptions)
 ```json
 {
-  "error": {
-    "code": "VALIDATION_ERROR",
-    "message": "Invalid input",
-    "details": [ { "field": "evidenceSummary", "message": "must be between 10 and 1000 characters" } ]
-  }
+   "error": {
+      "code": "VALIDATION_ERROR",
+      "message": "Invalid input",
+      "details": [ { "field": "evidenceSummary", "message": "must be between 10 and 1000 characters" } ]
+   }
 }
 ```
 `details` appears only for validation errors. Responses never contain stack traces, SQL or class names. Errors are always JSON, whatever the client's `Accept` header says.
@@ -52,6 +52,12 @@ Week 3 added pagination on list endpoints, rate limiting on the auth routes and 
 | 415 | UNSUPPORTED_MEDIA_TYPE | The request body is not `application/json` |
 | 429 | TOO_MANY_REQUESTS | Too many `POST /api/auth/*` requests from one address in the current window. Response header `Retry-After` gives the seconds to wait |
 | 500 | INTERNAL_ERROR | Unexpected failure; details are logged server-side only |
+
+### Interactive documentation (Week 3)
+- Swagger UI: `http://localhost:8080/swagger-ui.html`. Generated from the controllers by springdoc-openapi, so it always matches the running code. Use **Authorize** to paste a bearer token.
+- Raw OpenAPI document of the running app: `/v3/api-docs`.
+- Hand-written contract with the full error codes and examples: `docs/openapi.yaml` (OpenAPI 3.0.3).
+- Both are public and can be switched off with `SWAGGER_ENABLED=false`. The generated document does not list every error code (429 and the 409 variants); this file and `openapi.yaml` do.
 
 ### Pagination, rate limiting and CORS (Week 3)
 
@@ -147,10 +153,10 @@ The summary and URL limits are identical to the database constraints `ck_assessm
 Example request:
 ```json
 {
-  "skillId": "aaaaaaaa-0000-0000-0000-000000000004",
-  "claimedLevel": "ADVANCED",
-  "evidenceSummary": "Built and deployed three Spring Boot services for the payroll team.",
-  "evidenceUrl": "https://github.com/example/payroll-services"
+   "skillId": "aaaaaaaa-0000-0000-0000-000000000004",
+   "claimedLevel": "ADVANCED",
+   "evidenceSummary": "Built and deployed three Spring Boot services for the payroll team.",
+   "evidenceUrl": "https://github.com/example/payroll-services"
 }
 ```
 Success: `201 Created`, header `Location: /api/skill-assessments/{id}`, body = skill assessment object
@@ -376,13 +382,13 @@ Only VERIFIED assessments count. A requirement is met when the employee has a VE
 Success: `200 OK`:
 ```json
 {
-  "opportunityId": "…", "employeeId": "…",
-  "totalRequirements": 3, "requirementsMet": 2, "matchPercentage": 66,
-  "requirements": [
-    {"skillId": "…", "skillName": "Java", "minimumLevel": "INTERMEDIATE", "verifiedLevel": "ADVANCED", "met": true},
-    {"skillId": "…", "skillName": "SQL", "minimumLevel": "BEGINNER", "verifiedLevel": "BEGINNER", "met": true},
-    {"skillId": "…", "skillName": "Docker", "minimumLevel": "ADVANCED", "verifiedLevel": "INTERMEDIATE", "met": false}
-  ]
+   "opportunityId": "…", "employeeId": "…",
+   "totalRequirements": 3, "requirementsMet": 2, "matchPercentage": 66,
+   "requirements": [
+      {"skillId": "…", "skillName": "Java", "minimumLevel": "INTERMEDIATE", "verifiedLevel": "ADVANCED", "met": true},
+      {"skillId": "…", "skillName": "SQL", "minimumLevel": "BEGINNER", "verifiedLevel": "BEGINNER", "met": true},
+      {"skillId": "…", "skillName": "Docker", "minimumLevel": "ADVANCED", "verifiedLevel": "INTERMEDIATE", "met": false}
+   ]
 }
 ```
 `verifiedLevel` is the employee's highest VERIFIED level for the skill, or `null`.

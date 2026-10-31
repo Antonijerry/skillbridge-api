@@ -1,6 +1,6 @@
 # Security Notes (Week 3)
 
-What is protected, how, and how it is checked. "Test" means an automated test in `src/test` that passes in `.\mvnw.cmd test` (96 tests at the time of writing). Anything not tested says so.
+What is protected, how, and how it is checked. "Test" means an automated test in `src/test` that passes in `.\mvnw.cmd test` (97 tests at the time of writing). Anything not tested says so.
 
 ## Summary
 
@@ -41,6 +41,7 @@ What is protected, how, and how it is checked. "Test" means an automated test in
 - **Client address, not `X-Forwarded-For`.** The header can be forged by any client, so trusting it would let an attacker dodge the limit. The cost: behind a reverse proxy every user shares the proxy's address until forwarded headers are configured for a trusted proxy only.
 - **Role read from the database on every request**, not trusted from the token. One extra query per request buys instant role changes and instant deactivation.
 - **CORS closed by default.** An empty origin list means no browser on another origin can call the API. Setting `*` is possible but not recommended.
+- **Swagger UI and `/v3/api-docs` are public (no token) and on by default.** A reviewer or new developer can see every endpoint without an account, which is useful locally and also a map for an attacker. Set `SWAGGER_ENABLED=false` for a real deployment. Trying a protected endpoint from the UI still needs a valid token; the UI does not bypass any check.
 - **No HTML stripping.** Removing markup on input would corrupt legitimate text and give a false sense of safety. The API is JSON only, and the client must escape when it renders.
 
 ## Known gaps (stated, not hidden)

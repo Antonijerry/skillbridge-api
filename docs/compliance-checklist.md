@@ -41,14 +41,14 @@ Type: M = mandatory in the guide, R = my own engineering recommendation.
 ## Week 3
 | ID | Requirement | Type | Done when | Evidence | Status |
 |---|---|---|---|---|---|
-| W3-1 | Unit tests for key logic | M | Business rules covered | Test output | [ ] |
-| W3-2 | Integration tests incl. auth and 400 / 401 / 403 / 404; separate test DB | M | Failure cases covered | Test output | [ ] |
-| W3-3 | Tests pass with one command, noted in the README | M | Green on a clean clone | Terminal output | [ ] |
-| W3-4 | Coverage note: what is tested, what is not, why | M | Honest note | docs/test-coverage.md | [ ] |
-| W3-5 | Every endpoint documented (OpenAPI, Postman or README table) with auth and examples | M | A stranger can call it | Swagger UI or collection | [ ] |
-| W3-6 | Security basics: secrets in env, input sanitisation, CORS set deliberately, rate limiting on auth routes | M | Each item shown | docs/security-notes.md | [ ] |
-| W3-7 | Performance basics: pagination on lists, indexes on filtered fields | M | Both shown | docs/performance-notes.md | [ ] |
-| W3-8 | Deployed, or a Docker or step-by-step local setup; setup guide | M | Works from a clean machine | docs/setup-guide.md | [ ] |
+| W3-1 | Unit tests for key logic | M | Business rules covered | 49 unit tests green: match calculation, application transitions, review order, level order, request normalisation, paging parameters, rate limiter (`.\mvnw.cmd test`, 97 tests, 0 failures) | [x] |
+| W3-2 | Integration tests incl. auth and 400 / 401 / 403 / 404; separate test DB | M | Failure cases covered | 48 integration tests on a throwaway PostgreSQL 16 (Testcontainers): 400, 401, 403, 404, 405, 409 and 429 cases, a full journey test | [x] |
+| W3-3 | Tests pass with one command, noted in the README | M | Green on a clean clone | `.\mvnw.cmd test` documented in README and setup guide. Clean-clone run still to do | [ ] |
+| W3-4 | Coverage note: what is tested, what is not, why | M | Honest note | docs/test-coverage.md (JaCoCo: 40.1% at 60 tests, 76.1% at 74, 77% at 97 tests; branches 59%; gaps listed with evidence) | [x] |
+| W3-5 | Every endpoint documented (OpenAPI, Postman or README table) with auth and examples | M | A stranger can call it | docs/api-spec.md (29 endpoints, conventions, error table, examples), docs/openapi.yaml (31 operations, hand-written, `$ref`s checked but not run through an official validator), Swagger UI from springdoc (97 tests green with it; `OpenApiDocsTest` checks `/v3/api-docs`; confirmed in the browser against the Docker build: Swagger UI loads, register and login work and return a token; an authorised `GET /api/skills` returns 200 and the same call without a token returns 401), and postman/skillbridge-api.postman_collection.json (43 requests, folder 7 for paging; run once on a database freshly reset with `docker compose down -v`, and every response matched the expected outcome in the Postman console log; Runner pass counts not captured) | [x] |
+| W3-6 | Security basics: secrets in env, input sanitisation, CORS set deliberately, rate limiting on auth routes | M | Each item shown | docs/security-notes.md; tests for 429, CORS, injection-looking input, markup and error leaks | [x] |
+| W3-7 | Performance basics: pagination on lists, indexes on filtered fields | M | Both shown | docs/performance-notes.md; migration V6; `EXPLAIN ANALYZE` before and after on 50,000 rows | [x] |
+| W3-8 | Deployed, or a Docker or step-by-step local setup; setup guide | M | Works from a clean machine | docs/setup-guide.md. Clean-clone run still to do | [ ] |
 | W3-9 | README or case study: problem, data model, architecture, decisions, limitations | M | Complete | README.md | [ ] |
 | W3-10 | 5-minute walkthrough video: live requests and one technical decision | M | Recorded | Video link | [ ] |
 | W3-11 | Technical reflection | M | Changes, risks, next steps | docs/technical-reflection.md | [ ] |
@@ -64,23 +64,25 @@ Type: M = mandatory in the guide, R = my own engineering recommendation.
 - [ ] No secrets, keys or real passwords in the repo or history
 
 ## Red-flag self-audit (run before every tag)
-- [x] No secrets or real credentials in the repo or history (24 Oct 2026: `git ls-files .env` prints nothing and a history search for a 32+ character JWT secret prints nothing)
+- [x] No secrets or real credentials in the repo or history (1 Nov 2026: `git ls-files .env` prints nothing and `git log --all -p -G"JWT_SECRET=[A-Za-z0-9+/]{20,}"` prints nothing; the pattern only catches a secret written as `JWT_SECRET=` followed by 20 or more base64 characters)
 - [x] No plain-text passwords stored anywhere, including seed data (the seed holds a BCrypt hash of a documented dummy demo password; the plaintext appears only in the README, the Postman collection and the smoke script, as a dummy value)
 - [x] Every input validated; no stack traces in any response (checked on the Week 1 requests and in W2-8)
 - [x] Every implemented endpoint matches docs/api-spec.md
 - [x] README steps run from a clean clone (23 Oct 2026: a fresh clone of the `week-2` branch passed the smoke test, ALL 34 CHECKS PASSED)
 - [ ] Work is original, not a tutorial API with the names changed
 
-## Known limitations at Week 2 (stated, not hidden)
-- No automated tests and no hosted deployment (Week 3); a Docker run guide is provided.
-- Withdrawing a PENDING claim deletes it permanently.
-- Lists are not paginated; a withdrawn application cannot be re-submitted.
-- The seeded demo accounts share a known password; they must not ship to a real deployment.
-- Full list with reasons: docs/issue-log.md. (The Week 1 limitations about authentication and `GET /api/skills` are fixed; assessments still reference employees and skills by id, now recorded as design decision 20.)
+## Known limitations at Week 3 (stated, not hidden)
+- No hosted deployment, on purpose: the seeded demo accounts share a documented password. A Docker run guide and a local setup guide are provided.
+- No HTTPS in the application, no token revocation or refresh, no account lockout, no dependency vulnerability scan (docs/security-notes.md).
+- The rate limiter is in memory: per instance, reset on restart, fixed window.
+- Offset pagination gets slower on very deep pages.
+- Withdrawing a PENDING claim deletes it permanently; a withdrawn application cannot be re-submitted.
+- Tests do not cover concurrency, the role and active-status endpoints in depth or some uncommon error handlers (docs/test-coverage.md).
+- Full list with reasons: docs/issue-log.md.
 
 ## My own recommendations (not required by the guide)
 - R1 UUID primary keys
-- R2 Mockito and MockMvc for tests
+- R2 Mockito, MockMvc and Testcontainers for tests (done in Week 3)
 - R3 GitHub Actions CI
 - R4 Dockerised application, beyond the database
 - R5 PDF copies of the ERD, spec and notes in a Google Drive folder, linked from the README

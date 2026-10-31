@@ -25,6 +25,12 @@ skillbridge:
       cors:
         allowed-origins: ${CORS_ALLOWED_ORIGINS:}
 
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
+
 server:
   error:
     include-stacktrace: never

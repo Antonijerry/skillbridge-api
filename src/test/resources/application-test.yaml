@@ -1,0 +1,4 @@
+skillbridge:
+  rate-limit:
+    auth:
+      max-requests: 100000

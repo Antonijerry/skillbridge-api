@@ -6,12 +6,14 @@ import java.util.UUID;
 import com.skillbridge.assessment.domain.AssessmentStatus;
 import com.skillbridge.assessment.dto.AssessmentResponse;
 import com.skillbridge.assessment.service.SkillAssessmentService;
+import com.skillbridge.common.PageParams;
 import com.skillbridge.employee.dto.ActiveChangeRequest;
 import com.skillbridge.employee.dto.EmployeeResponse;
 import com.skillbridge.employee.dto.RoleChangeRequest;
 import com.skillbridge.employee.service.EmployeeService;
 import com.skillbridge.security.CurrentUserResolver;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,9 +45,13 @@ public class EmployeeController {
     }
 
     @GetMapping("/{id}/skill-assessments")
-    public List<AssessmentResponse> assessments(@AuthenticationPrincipal Jwt jwt, @PathVariable("id") UUID id,
-                                                @RequestParam(name = "status", required = false) AssessmentStatus status) {
-        return assessmentService.listForEmployee(currentUsers.from(jwt), id, status);
+    public ResponseEntity<List<AssessmentResponse>> assessments(
+            @AuthenticationPrincipal Jwt jwt, @PathVariable("id") UUID id,
+            @RequestParam(name = "status", required = false) AssessmentStatus status,
+            @RequestParam(name = "page", required = false) Integer page,
+            @RequestParam(name = "size", required = false) Integer size) {
+        return assessmentService.listForEmployeePage(currentUsers.from(jwt), id, status, PageParams.of(page, size))
+                .toResponse();
     }
 
     @PatchMapping("/{id}/role")

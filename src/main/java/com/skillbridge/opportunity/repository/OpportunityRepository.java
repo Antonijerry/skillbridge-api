@@ -13,11 +13,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface OpportunityRepository extends JpaRepository<Opportunity, UUID> {
 
-    @EntityGraph(attributePaths = "requirements")
-    List<Opportunity> findAllByOrderByCreatedAtDesc();
-
-    @EntityGraph(attributePaths = "requirements")
-    List<Opportunity> findByStatusOrderByCreatedAtDesc(OpportunityStatus status);
 
     Page<Opportunity> findByStatus(OpportunityStatus status, Pageable pageable);
 

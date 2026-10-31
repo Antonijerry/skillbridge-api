@@ -1,7 +1,7 @@
 # API specification
 
-Status: **Week 1 and Week 2 endpoints are implemented and verified against this file.**
-Week 3 adds pagination, rate limiting and OpenAPI documentation. Any change to a built endpoint edits this file in the same commit.
+Status: **Week 1, Week 2 and Week 3 behaviour is implemented and verified against this file.**
+Week 3 added pagination on list endpoints, rate limiting on the auth routes and deliberate CORS (see "Pagination, rate limiting and CORS" below). This file and the Postman collection in `postman/` are the endpoint documentation. Any change to a built endpoint edits this file in the same commit.
 
 ## Conventions
 - Base path `/api`. JSON in and out (`Content-Type: application/json`).
@@ -9,7 +9,7 @@ Week 3 adds pagination, rate limiting and OpenAPI documentation. Any change to a
 - Ids are UUIDs. Timestamps are ISO-8601 UTC (`2026-10-16T09:30:00Z`); dates are `YYYY-MM-DD`.
 - Text input is trimmed; a blank optional field counts as "not provided".
 - Skill levels are ordered BEGINNER < INTERMEDIATE < ADVANCED < EXPERT. "Same or higher" below uses this order.
-- Lists are ordered as stated per endpoint and are not paginated yet (Week 3).
+- Lists are ordered as stated per endpoint and are paginated (see "Pagination, rate limiting and CORS" below).
 
 ### Authentication and roles (Week 2)
 - Every endpoint except `POST /api/auth/register` and `POST /api/auth/login` needs `Authorization: Bearer <token>`.
@@ -50,7 +50,36 @@ Week 3 adds pagination, rate limiting and OpenAPI documentation. Any change to a
 | 409 | INVALID_STATE | The action is not allowed in the current state (opportunity or application status, closing date, own opportunity, an admin acting on themselves) |
 | 409 | ALREADY_APPLIED | One application per employee and opportunity, including a withdrawn one |
 | 415 | UNSUPPORTED_MEDIA_TYPE | The request body is not `application/json` |
+| 429 | TOO_MANY_REQUESTS | Too many `POST /api/auth/*` requests from one address in the current window. Response header `Retry-After` gives the seconds to wait |
 | 500 | INTERNAL_ERROR | Unexpected failure; details are logged server-side only |
+
+### Pagination, rate limiting and CORS (Week 3)
+
+**Pagination.** Every list endpoint (`GET /api/skills`, `/api/opportunities`, `/api/applications`, `/api/skill-assessments` and `/api/employees/{id}/skill-assessments`) accepts:
+
+| Query parameter | Default | Rule |
+|---|---|---|
+| `page` | 0 | zero-based, 0 or more |
+| `size` | 20 | 1 to 100 |
+
+- The body stays a plain JSON array. The total number of rows matching the filters is in the response header `X-Total-Count`.
+- A page past the end returns `[]` with the total still reported (status 200).
+- `size=0`, `size=101` or `page=-1` returns 400 `VALIDATION_ERROR`; a non-numeric value returns 400 `BAD_REQUEST`.
+- Ordering is stable: the order stated per endpoint, then by id, so no row is repeated or skipped between pages. Filters and role visibility apply before paging.
+
+Example:
+```http
+GET /api/skills?page=1&size=2
+Authorization: Bearer <token>
+
+200 OK
+X-Total-Count: 6
+[ { "id": "...", "name": "REST API Design", ... }, { "id": "...", "name": "Spring Boot", ... } ]
+```
+
+**Rate limiting.** `POST /api/auth/register` and `POST /api/auth/login` allow 20 requests per 60 seconds per client address (configurable: `RATE_LIMIT_AUTH_MAX`, `RATE_LIMIT_AUTH_WINDOW_SECONDS`). The next request returns 429 `TOO_MANY_REQUESTS` with `Retry-After`. The limit is in memory (per instance, reset on restart) and keyed on the connection address, not on `X-Forwarded-For`.
+
+**CORS.** A browser on another origin may call the API only if its origin is listed in `CORS_ALLOWED_ORIGINS` (comma separated). The default is none. Allowed methods: GET, POST, PUT, PATCH, DELETE, OPTIONS; allowed request headers: Authorization, Content-Type, Accept; exposed response headers: `X-Total-Count`, `Retry-After`; credentials are not allowed (tokens are sent in a header, not a cookie). Requests that are not from a browser are unaffected.
 
 ### Objects
 
@@ -398,7 +427,8 @@ Dummy data only, loaded by Flyway migrations (V3 seed, V5 demo passwords). Fixed
 ## Known limitations (stated, not hidden)
 - Withdrawing (DELETE) a PENDING claim deletes it permanently, so withdrawn claims leave no history.
 - A VERIFIED level cannot be edited. To claim a higher level, submit a new claim.
-- Lists are not paginated (Week 3).
+- Pagination is offset based: very deep pages (for example `page=10000`) get slower as the table grows. The page size is capped at 100. A cursor (keyset) scheme would be the next step.
+- The rate limit is held in memory per instance, so it resets on restart and is not shared between several instances. Behind a reverse proxy all clients share the proxy's address until forwarded headers are configured safely.
 - A withdrawn application cannot be re-submitted: one application per employee and opportunity.
 - Two reviewers acting on the same claim at the same instant: the last write wins.
 - A URL with invalid percent-encoding is rejected by the server with a plain HTML 400 page, outside the error format.

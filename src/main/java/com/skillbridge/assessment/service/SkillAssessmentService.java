@@ -76,17 +76,6 @@ public class SkillAssessmentService {
         return toResponses(assessments.findAll(filter, Sort.by("createdAt").ascending()));
     }
 
-    /** GET /api/employees/{id}/skill-assessments: the employee themselves, or a MANAGER or ADMIN. */
-    @Transactional(readOnly = true)
-    public List<AssessmentResponse> listForEmployee(CurrentUser actor, UUID employeeId, AssessmentStatus status) {
-        if (actor.isEmployee() && !actor.owns(employeeId)) {
-            throw ApiException.forbidden();
-        }
-        if (!employees.existsById(employeeId)) {
-            throw ApiException.notFound("Employee not found");
-        }
-        return list(actor, employeeId, null, status);
-    }
 
     @Transactional(readOnly = true)
     public AssessmentResponse get(CurrentUser actor, UUID id) {

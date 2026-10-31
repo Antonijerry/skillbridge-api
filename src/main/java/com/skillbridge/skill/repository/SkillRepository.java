@@ -10,9 +10,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface SkillRepository extends JpaRepository<Skill, UUID> {
 
-    List<Skill> findAllByOrderByNameAsc();
-
-    List<Skill> findByActiveOrderByNameAsc(boolean active);
 
     boolean existsByNameIgnoreCase(String name);
 
